@@ -431,10 +431,11 @@ with st.form(key="battle_action_form", clear_on_submit=True):
     col_btn1, col_btn2 = st.columns([3, 1])
     with col_btn1:
        selected_objection = st.selectbox(
-            "Want to object? Select a logical fallacy from your cheat sheet:",
+            "Want to object?",
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
             disabled=st.session_state.processing_turn
         )
+        st.caption("👈 *Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
