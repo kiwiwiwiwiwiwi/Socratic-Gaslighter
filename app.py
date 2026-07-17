@@ -335,8 +335,8 @@ col_feed, col_matrix = st.columns([1, 1])
 
 with col_feed:
     st.markdown("### 💬 Arena Feed Log")
-    # Reduced container window height slightly to match standard vertical limits perfectly
-    with st.container(height=380):
+    # SCALED UP: Increased height from 380 to 520 to make it look much larger and epic
+    with st.container(height=520):
         for msg in st.session_state.chat_history:
             class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
             speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
@@ -345,8 +345,8 @@ with col_feed:
 with col_matrix:
     st.markdown("### 🕹️ Action & Strategy Matrix")
     
-    # Reduced container window height to fit seamlessly alongside the layout changes
-    with st.container(height=380):
+    # SCALED UP: Increased height from 380 to 520 to perfectly align with the left log
+    with st.container(height=520):
         user_argument = st.text_input("Your Counter-Argument Stance:", placeholder="Type your argument line here...", label_visibility="collapsed")
         
         st.markdown("---")
