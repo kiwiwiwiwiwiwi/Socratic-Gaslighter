@@ -11,7 +11,7 @@ st.set_page_config(
     page_title="The Socratic Gaslighter",
     page_icon="🤥",
     layout="wide",
-    initial_sidebar_state="expanded", # Keep sidebar open for real-time tracking
+    initial_sidebar_state="expanded",
 )
 
 # Initialize the Gemini Client using Streamlit Secrets
@@ -85,7 +85,7 @@ if "wins_championship" not in st.session_state: st.session_state.wins_championsh
 if "game_started" not in st.session_state: st.session_state.game_started = False
 if "game_mode" not in st.session_state: st.session_state.game_mode = "Classic Duel"
 if "lobby_level" not in st.session_state: st.session_state.lobby_level = 1
-if "language_mode" not in st.session_state: st.session_state.language_mode = "Default"
+if "language_mode" not in st.session_state: st.session_state.language_mode = "Pretentious Elite"
 
 # Match states
 if "player_hp" not in st.session_state: st.session_state.player_hp = 100
@@ -128,27 +128,27 @@ def generate_dressed_gaslight(player_input=None):
     
     context_clause = f"The player just argued: '{player_input}'" if player_input else "This is the match opening."
     
-    language_instruction = "Use elegant, dense, high-vocabulary, academic, and slightly pretentious English words."
-    if st.session_state.language_mode == "Simple English":
-        language_instruction = "Use extremely clear, basic, straightforward English words. Avoid complex vocabulary or long metaphors so that non-native speakers can follow easily."
+    language_instruction = "Use elegant, dense, high-vocabulary, academic, and highly pretentious English words."
+    if st.session_state.language_mode == "Direct Cut":
+        language_instruction = "Use extremely clear, basic, plain, and straightforward English words. Keep the sentence structure simple so non-native speakers can follow without friction."
 
     prompt = f"""
     You are the 'Socratic Gaslighter', a deeply smug, patronizing debater defending the absurd thesis: "{st.session_state.current_thesis}".
     {context_clause}
     {language_instruction}
     
-    Your next statement must be written to sound organic, passive-aggressive, and condescending, but behind the scenes it MUST execute this exact logic:
+    Your next statement must sound organic, passive-aggressive, and condescending, executing this exact hidden logic:
     "{chosen['core_logic']}"
     
-    CRITICAL INSTRUCTIONS:
-    - Keep your total response short (2 to 4 sentences max).
-    - Do NOT name or explicitly write out these fallback terms anywhere in your output: {chosen['fallacies']}. 
+    CRITICAL CONSTRAINT:
+    - Keep your total response short, snappy, and punchy. It MUST NOT exceed 50 words total!
+    - Do NOT name or explicitly write out these fallback fallacy terms anywhere in your response text: {chosen['fallacies']}.
     """
     try:
         response = client.models.generate_content(model=ACTIVE_MODEL, contents=prompt)
         return response.text.strip()
     except:
-        return f"Oh, typical. Your response framework has jammed my logic module. (Template logic: {chosen['core_logic']})"
+        return f"Oh, typical. Your mental capacity has bottlenecked my processing grid. (Template: {chosen['core_logic']})"
 
 def process_deflection(selected_choices, user_text):
     targets = st.session_state.current_targets
@@ -239,14 +239,15 @@ if not st.session_state.game_started:
         st.markdown("### 🎮 Arena Configurations")
         mode_select = st.radio("Select Match Variant:", ["Classic Duel", "Endless Mode (Survival)", "3-Round Championship"], horizontal=True)
         
+        # FIXED: Removed literal HTML tags <b> from text parameters to resolve raw string bugs
         if mode_select == "Classic Duel":
-            st.info("辨 <b>Classic Duel:</b> Fixed, standalone mental bout. Pick your target difficulty below.")
+            st.info("辨 **Classic Duel:** Fixed, standalone mental bout. Pick your target difficulty below.")
             selected_tier = st.slider("Select Match Level Target:", 1, 3, 1)
         elif mode_select == "Endless Mode (Survival)":
-            st.warning("💀 <b>Survival Gauntlet:</b> Battle an endless loop of opponents. Fallacy difficulty triggers escalation automatically at 5 and 10 match wins!")
+            st.warning("💀 **Survival Gauntlet:** Battle an endless loop of opponents. Fallacy difficulty triggers escalation automatically at 5 and 10 match wins!")
             selected_tier = 1
         else:
-            st.success("🏆 <b>Championship Tournament:</b> Survive three consecutive rounds hard-scaled from Level 1 straight up to Level 3.")
+            st.success("🏆 **Championship Tournament:** Survive three consecutive rounds hard-scaled from Level 1 straight up to Level 3.")
             selected_tier = 1
 
         st.write("---")
@@ -256,7 +257,7 @@ if not st.session_state.game_started:
     with col_r:
         st.markdown("<div class='game-box'>", unsafe_allow_html=True)
         st.markdown("### 💾 PROFILE HISTORIC SCORECARD")
-        st.write(f"🤺 **Classic Duels Won:** `{st.session_state.wins_classic}`")
+        st.write(f"辨 **Classic Duels Won:** `{st.session_state.wins_classic}`")
         st.write(f"💀 **Endless Current Streak:** `{st.session_state.wins_endless}`")
         st.write(f"🏆 **Championships Claimed:** `{st.session_state.wins_championship}`")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -274,14 +275,12 @@ if not st.session_state.game_started:
     st.stop()
 
 # -------------------------------------------------------------------
-# PAGE 2: CLEAN ACTIVE PLAYING ARENA (LOBBY IS COMPLETELY HIDDEN)
+# PAGE 2: CLEAN ACTIVE PLAYING ARENA
 # -------------------------------------------------------------------
-# PERSISTENT STATS SIDEBAR (Guarantees zero scrolling required to see health/stats)
 with st.sidebar:
     st.markdown("<h2 style='color:#F43F5E; text-align:center;'>🤥 Status Display</h2>", unsafe_allow_html=True)
     st.write("---")
     
-    # Live Health Gauges
     st.markdown(f"🟢 **Your Credibility:** `{st.session_state.player_hp}%`")
     st.progress(st.session_state.player_hp / 100)
     
@@ -295,46 +294,39 @@ with st.sidebar:
     st.markdown(f"Rank-Tier: **{CURRENT_TITLE} (Level {CURRENT_TIER})**")
     
     st.write("---")
-    # Real-Time UI Language Switch
-    st.session_state.language_mode = st.selectbox("Language Dialect Variant:", ["Default", "Simple English"])
+    # CHANGED: Rebranded dropdown selector to Diction Profile with unique options
+    st.session_state.language_mode = st.selectbox("Diction Profile:", ["Pretentious Elite", "Direct Cut"])
     
     if st.button("🏳️ Abandon Match & Return to Lobby", use_container_width=True):
         st.session_state.game_started = False
         st.rerun()
 
-# --- MAIN ARENA ROW HEADER (STICKY POPUPS FIRST) ---
 st.markdown(f"### 🎯 Target Thesis: *\"{st.session_state.current_thesis}\"*")
 
-# CRITICAL BATTLE REPORT AT TOP - No more scrolling down to check turn effects!
 if st.session_state.battle_report:
     rep_type, rep_msg = st.session_state.battle_report
-    if rep_type == "SUCCESS":
-        st.success(rep_msg)
-    else:
-        st.error(rep_msg)
+    if rep_type == "SUCCESS": st.success(rep_msg)
+    else: st.error(rep_msg)
     st.session_state.battle_report = None
 
-# Game-Over Processing Overlay Interceptor
 if st.session_state.game_over:
     if st.session_state.game_result == "WIN":
         st.balloons()
-        st.success("🏆 **VICTORY CONQUERED!** The opponent's rhetoric has been pulverized. Your profile scorecard records have updated.")
+        st.success("🏆 **VICTORY CONQUERED!** The opponent's rhetoric has been pulverized.")
     else:
         st.error("💀 **DEFEAT.** You got completely turned around and gaslit.")
         if st.session_state.game_mode == "Endless Mode (Survival)":
-            st.session_state.wins_endless = 0 # Reset streak on complete structural collapse
+            st.session_state.wins_endless = 0 
         
     if st.button("Return to Lobby Setup Panel", use_container_width=True):
         st.session_state.game_started = False
         st.rerun()
     st.stop()
 
-# Split Layout: Feed Log Left, Tactical Control Matrix Right
 col_feed, col_matrix = st.columns([3, 2])
 
 with col_feed:
     st.markdown("### 💬 Arena Feed Log")
-    # Reversed display sequence option keeps latest text visible, or default layout rendering
     for msg in st.session_state.chat_history:
         class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
         speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
@@ -355,10 +347,8 @@ with col_matrix:
         
         for key in f_keys:
             if CURRENT_TIER == 3:
-                # Level 3 Memory blackout mode
                 choices_status[key] = st.checkbox(f"**{key}**")
             else:
-                # Level 1 and 2 descriptive structural layout help
                 choices_status[key] = st.checkbox(f"**{key}**", help=AVAILABLE_FALLACIES[key])
                 st.markdown(f"<p style='color:#94A3B8; font-size:12px; margin-top:-10px; margin-left:28px; font-style:italic;'>{AVAILABLE_FALLACIES[key]}</p>", unsafe_allow_html=True)
                     
@@ -374,7 +364,6 @@ if submit_turn:
         st.session_state.processing = True
         st.rerun()
 
-# Async Engine Handling State
 if st.session_state.processing:
     active_selections = [k for k, v in choices_status.items() if v]
     process_deflection(active_selections, user_argument)
