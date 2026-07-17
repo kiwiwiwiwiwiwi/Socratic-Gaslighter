@@ -3,6 +3,43 @@ import random
 import streamlit as st
 from google import genai
 
+def trigger_victory_rain():
+    """Rains triumph emojis down the screen instead of basic corporate balloons."""
+    st.html("""
+    <script>
+    // Access the Streamlit parent document to inject visual effects
+    const doc = window.parent.document;
+    if (!doc.getElementById('rhetorical-rain')) {
+        const style = doc.createElement('style');
+        style.id = 'rhetorical-rain';
+        style.innerHTML = `
+            @keyframes fall {
+                0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+            }
+            .emoji-drop {
+                position: fixed; top: -5vh; font-size: 2rem;
+                animation: fall 3s linear forwards; z-index: 99999; pointer-events: none;
+            }
+        `;
+        doc.head.appendChild(style);
+        
+        const emojis = ['💥', '🏆', '🧠', '🤥', '👑'];
+        for (let i = 0; i < 40; i++) {
+            setTimeout(() => {
+                const drop = doc.createElement('div');
+                drop.className = 'emoji-drop';
+                drop.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                doc.body.appendChild(drop);
+                setTimeout(() => drop.remove(), 4000);
+            }, i * 150);
+        }
+    }
+    </script>
+    """)
+
 # -------------------------------------------------------------------
 # 1. INITIALIZATION & SETUP
 # -------------------------------------------------------------------
