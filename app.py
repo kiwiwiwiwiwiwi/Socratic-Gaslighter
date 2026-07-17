@@ -1,6 +1,5 @@
 import os
 import random
-import time
 import streamlit as st
 from google import genai
 
@@ -39,6 +38,7 @@ FALLACIES = {
     "Slippery Slope": "Claiming one tiny action will instantly trigger a massive disaster chain."
 }
 
+# Dynamic help text for selectbox tooltip
 help_tooltip_text = "📚 QUICK FALLACY GUIDE:\n\n" + "\n".join([f"• {k}: {v}" for k, v in FALLACIES.items()])
 
 # Initialize Session State Variables if they don't exist
@@ -104,7 +104,6 @@ def judge_objection(selected_fallacy):
             st.session_state.ai_hp = 0
             st.session_state.game_over = True
             st.session_state.game_result = "WIN"
-            # Force the closing line directly into the text history feed
             st.session_state.chat_history.append({"role": "ai", "text": f"💥 [FATAL ERROR] {generate_losing_line()}"})
         else:
             st.session_state.strike_alert = ("SUCCESS", f"💥 STRIKE! You successfully spotted their **{correct_fallacy}**! The Gaslighter's credibility crumbles!")
@@ -131,7 +130,7 @@ st.markdown("""
 st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# 4. HOME SCREEN
+# 4. HOME SCREEN (More descriptive, sets the vibe)
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Welcome to the High-Stakes Logical Fallacy Arena!</p>", unsafe_allow_html=True)
@@ -186,7 +185,6 @@ st.write("---")
 
 # Handle End-Game States
 if st.session_state.game_over:
-    # --- RENDER HISTORY ONE LAST TIME BEFORE BLOCKING SO USER CAN READ THE FINAL LINE ---
     st.markdown("### 💬 Final Battle History")
     for msg in st.session_state.chat_history:
         if msg["role"] == "user":
@@ -225,7 +223,7 @@ for msg in st.session_state.chat_history:
 st.write("---")
 st.markdown("### 🕹️ Your Turn: Make Your Move")
 
-# The text box and dropdown will automatically lock out/disable if processing_turn is True
+# Form elements automatically disable when st.session_state.processing_turn is True
 with st.form(key="battle_action_form", clear_on_submit=True):
     user_argument = st.text_area(
         "Type your counter-argument here:", 
@@ -255,53 +253,61 @@ if submit_action:
     if not user_argument.strip():
         st.warning("You can't just stare at them silently! Type a response.")
     else:
-        # Set state to lock forms instantly
+        # Instant UI Lockout
         st.session_state.processing_turn = True
-        
-        # Display loading context inside a spinner wrapper
-        with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
-            if selected_objection == "-- Don't Object, Just Argue Normal --":
-                st.session_state.player_hp -= 10
-                if st.session_state.player_hp <= 0:
-                    st.session_state.player_hp = 0
-                    st.session_state.game_over = True
-                    st.session_state.game_result = "LOSE"
-                
-                st.session_state.chat_history.append({"role": "user", "text": user_argument})
-                st.session_state.strike_alert = ("FAIL", "⚠️ You argued normally but failed to call out their fallacy! Your HP slowly drains as they drag out the debate.")
-            else:
-                st.session_state.chat_history.append({"role": "user", "text": f"🚨 [OBJECTION: {selected_objection}] {user_argument}"})
-                judge_objection(selected_objection)
-
-        # Generate AI counter-strike if game is still going
-        if not st.session_state.game_over:
-            with st.spinner("🤥 The Gaslighter is writing a smug retort..."):
-                new_ai_reply = generate_gaslight_response(user_argument)
-                st.session_state.chat_history.append({"role": "ai", "text": new_ai_reply})
-        
-        # Reset submission flags and refresh view
-        st.session_state.processing_turn = False
         st.rerun()
-# -------------------------------------------------------------------
-    # 6. SIDEBAR SOUNDTRACK & CHEAT SHEET
-    # -------------------------------------------------------------------
-    with st.sidebar:
-        st.markdown("### 🎵 Arena Soundtrack")
-        st.write("Tune into the official Socratic debate synth theme:")
-        
-        # WE USE A STABLE PUBLIC SYNTHWAVE WEB LINK DIRECTLY
-        try:
-            st.audio(
-                "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", 
-                format="audio/mp3", 
-                loop=True, 
-                autoplay=False
-            )
-        except Exception as e:
-            st.info("💡 Unable to load the arena soundtrack.")
+
+# This block executes after the rerun above to ensure the lockout state is active and visible
+if st.session_state.processing_turn:
+    with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
+        if selected_objection == "-- Don't Object, Just Argue Normal --":
+            st.session_state.player_hp -= 10
+            if st.session_state.player_hp <= 0:
+                st.session_state.player_hp = 0
+                st.session_state.game_over = True
+                st.session_state.game_result = "LOSE"
             
-        st.write("---")
-        st.markdown("### 📖 Fallacy Cheat Sheet")
-        st.write("Keep these definitions close during your debate:")
-        for key, val in FALLACIES.items():
-            st.markdown(f"**• {key}**:\n*{val}*")
+            st.session_state.chat_history.append({"role": "user", "text": user_argument})
+            st.session_state.strike_alert = ("FAIL", "⚠️ You argued normally but failed to call out their fallacy! Your HP slowly drains as they drag out the debate.")
+        else:
+            st.session_state.chat_history.append({"role": "user", "text": f"🚨 [OBJECTION: {selected_objection}] {user_argument}"})
+            judge_objection(selected_objection)
+
+    # Generate AI counter-strike if game is still going
+    if not st.session_state.game_over:
+        with st.spinner("🤥 The Gaslighter is writing a smug, flawed retort..."):
+            new_ai_reply = generate_gaslight_response(user_argument)
+            st.session_state.chat_history.append({"role": "ai", "text": new_ai_reply})
+    
+    # Unlock and refresh UI
+    st.session_state.processing_turn = False
+    st.rerun()
+
+# -------------------------------------------------------------------
+# 6. SIDEBAR SOUNDTRACK & CHEAT SHEET
+# -------------------------------------------------------------------
+with st.sidebar:
+    st.markdown("### 🎵 Arena Soundtrack")
+    st.write("Tune into the official Socratic debate synth theme:")
+    
+    # Check if local file background_music.mp3 exists, otherwise fall back to internet URL
+    music_source = "background_music.mp3"
+    if not os.path.exists(music_source):
+        # High quality royalty-free synthwave stream
+        music_source = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    
+    try:
+        st.audio(
+            music_source, 
+            format="audio/mp3", 
+            loop=True, 
+            autoplay=False
+        )
+    except Exception as e:
+        st.info("💡 Unable to load soundtrack.")
+        
+    st.write("---")
+    st.markdown("### 📖 Fallacy Cheat Sheet")
+    st.write("Keep these definitions close during your debate:")
+    for key, val in FALLACIES.items():
+        st.markdown(f"**• {key}**:\n*{val}*")
