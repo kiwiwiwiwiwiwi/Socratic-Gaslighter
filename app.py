@@ -49,6 +49,8 @@ FALLACIES = {
 help_tooltip_text = "📚 QUICK FALLACY GUIDE:\n\n" + "\n".join([f"• {k}: {v}" for k, v in FALLACIES.items()])
 
 # Initialize Session State Variables
+if "show_intro" not in st.session_state:
+    st.session_state.show_intro = True
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
 if "game_mode" not in st.session_state:
@@ -221,7 +223,6 @@ def judge_objection(selected_fallacy):
             st.session_state.game_over = True
             st.session_state.game_result = "LOSE"
             
-        # Condescending mean phrases matching the mistake
         insults = [
             f"Imagine confusing basic logic with a {selected_fallacy}. Embarrassing.",
             f"A child could see that wasn't a {selected_fallacy}, yet here you are.",
@@ -230,7 +231,6 @@ def judge_objection(selected_fallacy):
         ]
         chosen_insult = random.choice(insults)
         
-        # Subtitle reveal showing exactly what it actually was
         st.session_state.strike_alert = (
             "FAIL", 
             f"❌ **FALSE ACCUSATION!** (-{penalty}% HP)\n\n*\"{chosen_insult}\"*\n\n👉 **Actual Fallacy Committed:** {correct_fallacy}"
@@ -251,10 +251,37 @@ st.markdown("""
 st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# 4. HOME SCREEN & GAME MODE SELECTION
+# 4A. GAME TITLE SCREEN / DESCRIPTION (PHASE 1)
+# -------------------------------------------------------------------
+if st.session_state.show_intro:
+    st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>The Ultimate Logical Fallacy Battleground</p>", unsafe_allow_html=True)
+    st.write("---")
+    
+    st.markdown("""
+    ### 📖 Welcome to the Arena
+    You are stepping into a high-stakes rhetorical arena facing **The Socratic Gaslighter**—an insufferably confident, aggressively smug debater who relies entirely on invalid logic, psychological projection, and corrupted debate practices to win arguments about entirely ridiculous facts.
+    
+    #### 🕹️ How It Works:
+    1. **The Core Loop**: The Gaslighter will state an absurd thesis statement (e.g., *"Birds are government surveillance drones"*).
+    2. **Spot the Flaw**: In every single response, the Gaslighter will intentionally deploy a major **logical fallacy** (such as *Ad Hominem*, *Strawman*, or *Circular Reasoning*).
+    3. **Call Them Out**: Your job is to draft a counter-argument and **accurately choose the fallacy** they committed from your toolkit.
+    
+    #### ⚡ The Stakes:
+    * **Spotting a Fallacy Right**: Damages the Gaslighter's credibility score. Bring it to 0% to collapse their logical system entirely!
+    * **Blindly Arguing / Accusing Wrong**: Drains your own credibility health bar. If you crash to 0%, you lose the argument and get completely gaslit!
+    """)
+    
+    st.write("---")
+    if st.button("🎮 Enter the Arena Lobby", use_container_width=True):
+        st.session_state.show_intro = False
+        st.rerun()
+    st.stop()
+
+# -------------------------------------------------------------------
+# 4B. LOBBY CONFIGURATION SCREEN (PHASE 2)
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
-    st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Welcome to the High-Stakes Logical Fallacy Arena!</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Configure Your Rhetorical Gauntlet</p>", unsafe_allow_html=True)
     
     if st.session_state.endless_high_score > 0:
         st.markdown(f"<p style='text-align: center; font-size: 20px; color: #FFD700; font-weight: bold;'>🏆 Current Endless Mode High Score Streak: {st.session_state.endless_high_score} Opponents Defeated!</p>", unsafe_allow_html=True)
@@ -281,7 +308,7 @@ if not st.session_state.game_started:
     selected_topic = st.selectbox("Pick an absurd thesis to dismantle:", THESES)
     custom_topic = st.text_input("...or type a custom absurd thesis of your own:")
     
-    if st.button("🚨 Enter the Arena", use_container_width=True):
+    if st.button("🚨 Start the Match", use_container_width=True):
         st.session_state.game_mode = mode_selection
         st.session_state.thesis = custom_topic if custom_topic.strip() else selected_topic
         st.session_state.game_started = True
@@ -349,7 +376,7 @@ if st.session_state.game_over:
         else:
             st.error("💀 DEFEAT... You got completely gaslit. Your credibility hit 0%.")
         
-    if st.button("Play Again / Back to Menu", use_container_width=True):
+    if st.button("Play Again / Back to Lobby", use_container_width=True):
         st.session_state.game_started = False
         st.rerun()
     st.stop()
