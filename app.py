@@ -46,8 +46,6 @@ FALLACIES = {
     "Slippery Slope": "Claiming one tiny action will instantly trigger a massive disaster chain."
 }
 
-help_tooltip_text = "📚 QUICK FALLACY GUIDE:\n\n" + "\n".join([f"• {k}: {v}" for k, v in FALLACIES.items()])
-
 # Initialize Session State Variables
 if "show_intro" not in st.session_state:
     st.session_state.show_intro = True
@@ -81,6 +79,8 @@ if "endless_high_score" not in st.session_state:
     st.session_state.endless_high_score = 0
 if "championship_round" not in st.session_state:
     st.session_state.championship_round = 1
+if "perfect_run" not in st.session_state:
+    st.session_state.perfect_run = True
 
 ACTIVE_MODEL = 'gemini-3.1-flash-lite'
 
@@ -195,7 +195,6 @@ def judge_objection(selected_fallacy):
             last_ai_response = msg["text"]
             break
 
-    # The updated prompt that keeps the referee focused on addressing the player
     judge_prompt = f"""
     You are an incredibly nonchalant, deeply bored, and slightly rude logic tournament referee. You hate your job and find both the player and the gaslighter exhausting.
     The opponent (Gaslighter) said: "{last_ai_response}"
@@ -242,6 +241,7 @@ def judge_objection(selected_fallacy):
             st.session_state.strike_alert = ("SUCCESS", f"💥 **OBJECTION ALLOWED!**\n\n*📣 Referee:* {explanation}")
         st.session_state.current_fallacy = "" 
     else:
+        st.session_state.perfect_run = False
         penalty = 25
         if st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round == 3:
             penalty = 50
@@ -262,24 +262,17 @@ def judge_objection(selected_fallacy):
 # -------------------------------------------------------------------
 st.markdown("""
 <style>
+    .stApp { background-color: #0B0C10; }
+    .stAlert { border-radius: 8px !important; border: 1px solid #1f2937 !important; }
     .debate-title { text-align: center; color: #FF4B4B; font-weight: 800; margin-bottom: 0px;}
     .user-bubble { background-color: #0E1117; border: 2px solid #00F0FF; padding: 15px; border-radius: 10px; margin-bottom: 10px; color: #E0E0E0; }
     .ai-bubble { background-color: #0E1117; border: 2px solid #FF007F; padding: 15px; border-radius: 10px; margin-bottom: 10px; color: #E0E0E0; }
     .mode-badge { background-color: #1E1E2E; border: 1px solid #FFD700; padding: 5px 12px; border-radius: 15px; font-weight: bold; color: #FFD700; text-align: center; }
+    .achievement-box { background-color: #111827; border: 2px dashed #FFD700; padding: 15px; border-radius: 8px; text-align: center; margin-top: 15px; }
 </style>
 """, unsafe_allow_html=True)
 
 st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
-
-/* Make the entire app background cleaner and style the progress bars */
-.stApp {
-    background-color: #0B0C10;
-}
-/* Style Streamlit alert boxes to look like vintage arcade terminals */
-.stAlert {
-    border-radius: 8px !important;
-    border: 1px solid #1f2937 !important;
-}
 
 # -------------------------------------------------------------------
 # 4A. GAME TITLE SCREEN / DESCRIPTION (PHASE 1)
@@ -312,6 +305,8 @@ if st.session_state.show_intro:
 # 4B. LOBBY CONFIGURATION SCREEN (PHASE 2)
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
+    st.info("🚨 **MOBILE PLAYERS:** Tap the tiny **chevron/arrow icon (>)** in the upper-left corner of your screen to open the **Fallacy Cheat Sheet** and the arena soundtrack!")
+    
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Configure Your Rhetorical Gauntlet</p>", unsafe_allow_html=True)
     
     if st.session_state.endless_high_score > 0:
@@ -350,6 +345,7 @@ if not st.session_state.game_started:
         st.session_state.strike_alert = None
         st.session_state.endless_streak = 0
         st.session_state.championship_round = 1
+        st.session_state.perfect_run = True
         
         opening_prompt = f"You are the 'Socratic Gaslighter'. Drop a single, incredibly smug, arrogant opening statement defending your thesis: '{st.session_state.thesis}'. Do not include fallacies yet, just set a challenging, condescending tone. 2 sentences max."
         try:
@@ -380,10 +376,12 @@ st.write("---")
 
 col1, col2 = st.columns(2)
 with col1:
-    st.markdown(f"**Your Credibility:** {st.session_state.player_hp}%")
+    player_color = "🟢" if st.session_state.player_hp > 50 else ("🟡" if st.session_state.player_hp > 25 else "🔴")
+    st.markdown(f"{player_color} **Your Credibility:** {st.session_state.player_hp}%")
     st.progress(st.session_state.player_hp / 100)
 with col2:
-    st.markdown(f"**Gaslighter's Credibility:** {st.session_state.ai_hp}%")
+    ai_color = "🟢" if st.session_state.ai_hp > 50 else ("🟡" if st.session_state.ai_hp > 25 else "🔴")
+    st.markdown(f"{ai_color} **Gaslighter's Credibility:** {st.session_state.ai_hp}%")
     st.progress(st.session_state.ai_hp / 100)
 
 st.write("---")
@@ -401,9 +399,21 @@ if st.session_state.game_over:
             st.success("🏆 CHAMPIONSHIP CLEARED! You outmaneuvered the ultimate gaslighting grandmaster and claimed the trophy of logical supremacy!")
         else:
             st.success("🎉 TOTAL SYSTEM DEMOLITION! The Gaslighter's system has completely destabilized. Arrogance cannot withstand objective analysis!")
+        
+        # --- UNLOCKED RHETORICAL ACHIEVEMENTS ---
+        st.markdown("<div class='achievement-box'>🎖️ <b>RHETORICAL ACHIEVEMENTS UNLOCKED</b><br>", unsafe_allow_html=True)
+        if st.session_state.perfect_run:
+            st.markdown("✨ <b>[LOGICAL PARAGON]</b> - You won the entire match with 100% flawless structural accusations!", unsafe_allow_html=True)
+        if st.session_state.game_mode == "3-Round Championship":
+            st.markdown("🥇 <b>[DEBATE LORD]</b> - Mastered scaling difficulty metrics and conquered the multi-tiered tournament bracket system.", unsafe_allow_html=True)
+        else:
+            st.markdown("⚔️ <b>[GASLIGHT SURVIVOR]</b> - Proved truth defeats psychological projections in direct head-to-head combat.", unsafe_allow_html=True)
+        st.markdown("</div><br>", unsafe_allow_html=True)
     else:
         if st.session_state.game_mode == "Endless Mode (Survival)":
             st.error(f"💀 DEFEAT... Your credibility collapsed. You finished with a grand Survival Streak of **{st.session_state.endless_streak}**!")
+            if st.session_state.endless_streak >= 5:
+                st.markdown("<div class='achievement-box'>🎖️ <b>RHETORICAL ACHIEVEMENT UNLOCKED</b><br>🛡️ <b>[ENDLESS DEFENDER]</b> - Survived 5+ separate iterations of structural gaslighting waves before dynamic operational failure.</div><br>", unsafe_allow_html=True)
         else:
             st.error("💀 DEFEAT... You got completely gaslit. Your credibility hit 0%.")
         
@@ -445,7 +455,7 @@ with st.form(key="battle_action_form", clear_on_submit=True):
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
             disabled=st.session_state.processing_turn
         )
-        st.caption("*Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
+        st.caption("👈 *Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
@@ -464,6 +474,7 @@ if submit_action:
 if st.session_state.processing_turn:
     with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
         if selected_objection == "-- Don't Object, Just Argue Normal --":
+            st.session_state.perfect_run = False
             st.session_state.player_hp -= 10
             if st.session_state.player_hp <= 0:
                 st.session_state.player_hp = 0
