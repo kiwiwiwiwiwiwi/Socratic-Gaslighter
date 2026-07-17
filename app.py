@@ -282,13 +282,14 @@ if submit_action:
         # Reset submission flags and refresh view
         st.session_state.processing_turn = False
         st.rerun()
-
-# --- SIDEBAR CHEAT SHEET & MUSIC PLAYER ---
+# -------------------------------------------------------------------
+# 6. SIDEBAR SOUNDTRACK & CHEAT SHEET
+# -------------------------------------------------------------------
 with st.sidebar:
     st.markdown("### 🎵 Arena Soundtrack")
-    st.write("Turn on your custom Suno theme music to set the mood:")
+    st.write("Tune into the official Socratic debate synth theme:")
     
-    # This renders a clean audio player in the sidebar
+    # This renders the audio player widget and handles errors gracefully
     try:
         st.audio(
             "background_music.mp3", 
@@ -297,10 +298,10 @@ with st.sidebar:
             autoplay=False
         )
     except Exception as e:
-        st.info("💡 To play music, drop your Suno MP3 named 'background_music.mp3' into the project folder!")
-
+        st.info("💡 To play music, drop your Suno MP3 named 'background_music.mp3' into your project folder!")
+        
     st.write("---")
     st.markdown("### 📖 Fallacy Cheat Sheet")
-    st.write("Use these descriptions to catch the Gaslighter cheating:")
+    st.write("Keep these definitions close during your debate:")
     for key, val in FALLACIES.items():
         st.markdown(f"**• {key}**:\n*{val}*")
