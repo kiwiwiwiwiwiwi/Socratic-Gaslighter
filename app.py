@@ -338,7 +338,11 @@ if st.session_state.show_intro:
 # 4B. LOBBY CONFIGURATION SCREEN (PHASE 2)
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
-    st.info("🚨 Tap the tiny **chevron/arrow icon (>)** in the upper-left corner of your screen to open the **Fallacy Cheat Sheet** and the arena soundtrack!")
+    st.markdown("""
+    <div style='text-align: center; background-color: #0E1624; border: 1px solid #1E3A8A; color: #60A5FA; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;'>
+        🚨 <b>MOBILE PLAYERS:</b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open the <b>Fallacy Cheat Sheet</b> and the arena soundtrack!
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Configure Your Rhetorical Gauntlet</p>", unsafe_allow_html=True)
     
@@ -495,7 +499,7 @@ with st.form(key="battle_action_form", clear_on_submit=True):
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
             disabled=st.session_state.processing_turn
         )
-        st.caption("*Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
+        st.caption("👈 *Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
