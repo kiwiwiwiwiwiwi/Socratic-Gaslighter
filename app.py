@@ -188,9 +188,32 @@ def advance_championship_round():
     st.session_state.current_fallacy = random.choice(list(FALLACIES.keys()))
 
 def judge_objection(selected_fallacy):
-    correct_fallacy = st.session_state.current_fallacy
+    """Uses the LLM as a dynamic referee to see if the player's objection is valid for the text."""
+    last_ai_response = ""
+    for msg in reversed(st.session_state.chat_history):
+        if msg["role"] == "ai" and not msg["text"].startswith("💥") and not msg["text"].startswith("🔄") and not msg["text"].startswith("🏆"):
+            last_ai_response = msg["text"]
+            break
+
+    judge_prompt = f"""
+    You are an objective, fair logic tournament referee evaluating a debate performance.
+    The opponent just said: "{last_ai_response}"
+    The player objects and accuses them of committing this fallacy: **{selected_fallacy}** ({FALLACIES[selected_fallacy]}).
     
-    if selected_fallacy == correct_fallacy:
+    Is the player's accusation reasonably valid based on the text provided? (Keep in mind a sentence can contain multiple fallacies, if they spotted a legitimate one, rule it VALID).
+    Respond with exactly 'VALID' or 'INVALID' as the first word. 
+    Followed by a brief, 1-sentence explanation of why.
+    """
+    
+    try:
+        verdict_resp = client.models.generate_content(model=ACTIVE_MODEL, contents=judge_prompt).text.strip()
+        is_valid = verdict_resp.upper().startswith("VALID")
+        explanation = verdict_resp.replace("VALID", "").replace("INVALID", "").strip(" :-,")
+    except:
+        is_valid = (selected_fallacy == st.session_state.current_fallacy)
+        explanation = f"Hidden intended target was {st.session_state.current_fallacy}."
+
+    if is_valid:
         damage = 34
         if st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round == 3:
             damage = 25
@@ -210,7 +233,7 @@ def judge_objection(selected_fallacy):
                 st.session_state.game_result = "WIN"
                 st.session_state.chat_history.append({"role": "ai", "text": f"💥 [FATAL ERROR] {generate_losing_line()}"})
         else:
-            st.session_state.strike_alert = ("SUCCESS", f"💥 STRIKE! You successfully spotted their **{correct_fallacy}**! The Gaslighter's credibility crumbles!")
+            st.session_state.strike_alert = ("SUCCESS", f"💥 STRIKE! The referee rules your objection valid! {explanation}")
         st.session_state.current_fallacy = "" 
     else:
         penalty = 25
@@ -223,17 +246,9 @@ def judge_objection(selected_fallacy):
             st.session_state.game_over = True
             st.session_state.game_result = "LOSE"
             
-        insults = [
-            f"Imagine confusing basic logic with a {selected_fallacy}. Embarrassing.",
-            f"A child could see that wasn't a {selected_fallacy}, yet here you are.",
-            f"You read the cheat sheet upside down or what? That wasn't a {selected_fallacy}.",
-            f"Declaring a {selected_fallacy} out of thin air won't save your broken argument."
-        ]
-        chosen_insult = random.choice(insults)
-        
         st.session_state.strike_alert = (
             "FAIL", 
-            f"❌ **FALSE ACCUSATION!** (-{penalty}% HP)\n\n*\"{chosen_insult}\"*\n\n👉 **Actual Fallacy Committed:** {correct_fallacy}"
+            f"❌ **FALSE ACCUSATION!** (-{penalty}% HP)\n\n*Referee Verdict: {explanation}*"
         )
 
 # -------------------------------------------------------------------
