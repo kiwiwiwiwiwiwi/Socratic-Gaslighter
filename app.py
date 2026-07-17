@@ -455,7 +455,7 @@ with st.form(key="battle_action_form", clear_on_submit=True):
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
             disabled=st.session_state.processing_turn
         )
-        st.caption("👈 *Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
+        st.caption("*Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
