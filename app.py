@@ -211,18 +211,26 @@ def reset_match_state(keep_history=False):
     st.session_state.chat_history.append({"role": "ai", "text": first_retort})
 
 # -------------------------------------------------------------------
-# 4. GLOBAL STYLING
+# 4. INTENSE GLOBAL & ZERO-SCROLL STYLING
 # -------------------------------------------------------------------
 st.markdown("""
 <style>
+    /* Completely smash Streamlit's default expansive layout padding */
+    .block-container { padding-top: 1rem !important; padding-bottom: 0rem !important; margin-bottom: 0px !important; }
     .stApp { background-color: #0A0B0E; color: #E2E8F0; }
+    
+    /* Shrink gaps and layout paddings to avoid spilling vertically */
+    h3 { margin-top: 0px !important; margin-bottom: 8px !important; padding-top: 0px !important; font-size: 1.35rem !important; }
+    .stMainBlockContainer { gap: 0.5rem !important; }
+    hr { margin: 8px 0px !important; }
+    
     .game-box { background-color: #12141C; border: 2px solid #1E293B; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
     .badge-l1 { background-color: #065F46; color: #34D399; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
     .badge-l2 { background-color: #92400E; color: #FBBF24; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
     .badge-l3 { background-color: #991B1B; color: #FCA5A5; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
-    .chat-user { background-color: #1A1D29; border-left: 4px solid #38BDF8; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
-    .chat-ai { background-color: #1E1525; border-left: 4px solid #F43F5E; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
-    .fallacy-text { color: #94A3B8; font-size: 11px; margin-top: -6px; margin-bottom: 6px; font-style: italic; line-height: 1.2; }
+    .chat-user { background-color: #1A1D29; border-left: 4px solid #38BDF8; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+    .chat-ai { background-color: #1E1525; border-left: 4px solid #F43F5E; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+    .fallacy-text { color: #94A3B8; font-size: 11px; margin-top: -6px; margin-bottom: 4px; font-style: italic; line-height: 1.1; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -278,7 +286,7 @@ if not st.session_state.game_started:
 # PAGE 2: COMBAT ARENA
 # -------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("<h2 style='color:#F43F5E; text-align:center;'>🤥 Status Display</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#F43F5E; text-align:center; margin-top:0px;'>🤥 Status Display</h2>", unsafe_allow_html=True)
     st.write("---")
     
     st.markdown(f"🟢 **Your Credibility:** `{st.session_state.player_hp}%`")
@@ -291,7 +299,7 @@ with st.sidebar:
     st.markdown("### 📊 Active Match Info")
     badge_style = "badge-l1" if CURRENT_TIER == 1 else ("badge-l2" if CURRENT_TIER == 2 else "badge-l3")
     st.markdown(f"Variant: <span class='{badge_style}'>{st.session_state.game_mode}</span>", unsafe_allow_html=True)
-    st.markdown(f"Rank-Tier: **{CURRENT_TITLE} (Level {CURRENT_TIER})**")
+    st.markdown(f"Rank-Tier: **{CURRENT_TITLE}**")
     
     st.write("---")
     st.session_state.language_mode = st.selectbox("Diction Profile:", ["Pretentious Elite", "Direct Cut"])
@@ -327,7 +335,8 @@ col_feed, col_matrix = st.columns([1, 1])
 
 with col_feed:
     st.markdown("### 💬 Arena Feed Log")
-    with st.container(height=450):
+    # Reduced container window height slightly to match standard vertical limits perfectly
+    with st.container(height=380):
         for msg in st.session_state.chat_history:
             class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
             speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
@@ -336,8 +345,9 @@ with col_feed:
 with col_matrix:
     st.markdown("### 🕹️ Action & Strategy Matrix")
     
-    with st.container(height=450):
-        user_argument = st.text_input("Your Counter-Argument Stance:", placeholder="Type your argument line here...")
+    # Reduced container window height to fit seamlessly alongside the layout changes
+    with st.container(height=380):
+        user_argument = st.text_input("Your Counter-Argument Stance:", placeholder="Type your argument line here...", label_visibility="collapsed")
         
         st.markdown("---")
         if CURRENT_TIER == 3:
@@ -348,7 +358,6 @@ with col_matrix:
         choices_status = {}
         f_keys = sorted(list(AVAILABLE_FALLACIES.keys()))
         
-        # FIXED: Distributed checkboxes into a 2-column grid layout to eliminate scrolling
         grid_col1, grid_col2 = st.columns(2)
         
         for idx, key in enumerate(f_keys):
@@ -363,7 +372,6 @@ with col_matrix:
         with c_btn1:
             submit_accuse = st.button("💥 DEFLECT & ACCUSE", use_container_width=True)
         with c_btn2:
-            # BRANDING FIXED: Changed from weak "Just Converse" to aggressive "Fire Back Argument"
             submit_talk = st.button("🔥 FIRE BACK ARGUMENT", use_container_width=True)
 
 # Handle Submissions
