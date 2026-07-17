@@ -67,11 +67,39 @@ if "processing_turn" not in st.session_state:
 # Game-mode specific tracking variables
 if "endless_streak" not in st.session_state:
     st.session_state.endless_streak = 0
+if "endless_high_score" not in st.session_state:
+    st.session_state.endless_high_score = 0
 if "championship_round" not in st.session_state:
     st.session_state.championship_round = 1
 
-# Active long-term model target
 ACTIVE_MODEL = 'gemini-3.1-flash-lite'
+
+# -------------------------------------------------------------------
+# GLOBAL SIDEBAR (PLAYS MUSIC EVERYWHERE & SHOWS CHEAT SHEET)
+# -------------------------------------------------------------------
+with st.sidebar:
+    st.markdown("### 🎵 Arena Soundtrack")
+    st.write("Tune into the official Socratic debate synth theme:")
+    
+    music_source = "background_music.mp3"
+    if not os.path.exists(music_source):
+        music_source = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    
+    try:
+        st.audio(
+            music_source, 
+            format="audio/mp3", 
+            loop=True, 
+            autoplay=False
+        )
+    except Exception as e:
+        st.info("💡 Unable to load soundtrack.")
+        
+    st.write("---")
+    st.markdown("### 📖 Fallacy Cheat Sheet")
+    st.write("Keep these definitions close during your debate:")
+    for key, val in FALLACIES.items():
+        st.markdown(f"**• {key}**:\n*{val}*")
 
 # -------------------------------------------------------------------
 # 2. HELPER FUNCTIONS
@@ -117,6 +145,10 @@ def generate_losing_line():
 def start_next_endless_opponent():
     """Resets the Gaslighter for the next survival fight while preserving Player state."""
     st.session_state.endless_streak += 1
+    # Update high score instantly if current streak exceeds it
+    if st.session_state.endless_streak > st.session_state.endless_high_score:
+        st.session_state.endless_high_score = st.session_state.endless_streak
+        
     st.session_state.player_hp = min(100, st.session_state.player_hp + 30)
     st.session_state.ai_hp = 100
     st.session_state.thesis = random.choice(THESES)
@@ -160,7 +192,7 @@ def judge_objection(selected_fallacy):
             
             if st.session_state.game_mode == "Endless Mode (Survival)":
                 start_next_endless_opponent()
-                st.session_state.strike_alert = ("SUCCESS", f"💥 CRITICAL SUCCESS! You defeated the Gaslighter! Streak: {st.session_state.endless_streak}. Credibility partially restored (+30% HP)!")
+                st.session_state.strike_alert = ("SUCCESS", f"💥 CRITICAL SUCCESS! You defeated the Gaslighter! Current Streak: {st.session_state.endless_streak}. Credibility partially restored (+30% HP)!")
             elif st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round < 3:
                 advance_championship_round()
                 st.session_state.strike_alert = ("SUCCESS", f"💥 ROUND WON! You conquered Round {st.session_state.championship_round-1}. Prepare for the next opponent!")
@@ -203,6 +235,10 @@ st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_al
 if not st.session_state.game_started:
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Welcome to the High-Stakes Logical Fallacy Arena!</p>", unsafe_allow_html=True)
     
+    # Showcase Persistent High Score prominently on Home Screen
+    if st.session_state.endless_high_score > 0:
+        st.markdown(f"<p style='text-align: center; font-size: 20px; color: #FFD700; font-weight: bold;'>🏆 Current Endless Mode High Score Streak: {st.session_state.endless_high_score} Opponents Defeated!</p>", unsafe_allow_html=True)
+    
     st.write("---")
     st.subheader("🎯 Choose Your Game Mode")
     
@@ -216,7 +252,7 @@ if not st.session_state.game_started:
     if mode_selection == "Classic Duel":
         st.info("💡 **Classic Duel:** A pure head-to-head. Spot 3 logical fallacies before you run out of credibility to win.")
     elif mode_selection == "Endless Mode (Survival)":
-        st.warning("💀 **Endless Mode:** Survival of the fittest. When you defeat an AI, they reset with a new thesis. Spotting fallacies restores some HP. How high of a streak can you survive?")
+        st.warning(f"💀 **Endless Mode:** Survival of the fittest. When you defeat an AI, they reset with a new thesis. Spotting fallacies restores some HP. [Your Current Best Streak: {st.session_state.endless_high_score}]")
     elif mode_selection == "3-Round Championship":
         st.success("🏆 **3-Round Championship:** A scaling tournament. Round 1 has easy fallacies. Round 2 is tricky. Round 3 is an intense showdown where false accusations take double damage!")
         
@@ -369,30 +405,3 @@ if st.session_state.processing_turn:
     
     st.session_state.processing_turn = False
     st.rerun()
-
-# -------------------------------------------------------------------
-# 6. SIDEBAR SOUNDTRACK & CHEAT SHEET
-# -------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("### 🎵 Arena Soundtrack")
-    st.write("Tune into the official Socratic debate synth theme:")
-    
-    music_source = "background_music.mp3"
-    if not os.path.exists(music_source):
-        music_source = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-    
-    try:
-        st.audio(
-            music_source, 
-            format="audio/mp3", 
-            loop=True, 
-            autoplay=False
-        )
-    except Exception as e:
-        st.info("💡 Unable to load soundtrack.")
-        
-    st.write("---")
-    st.markdown("### 📖 Fallacy Cheat Sheet")
-    st.write("Keep these definitions close during your debate:")
-    for key, val in FALLACIES.items():
-        st.markdown(f"**• {key}**:\n*{val}*")
