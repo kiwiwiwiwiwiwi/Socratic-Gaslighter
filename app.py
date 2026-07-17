@@ -8,10 +8,10 @@ from google import genai
 # 1. INITIALIZATION & CONFIGURATION
 # -------------------------------------------------------------------
 st.set_page_config(
-    page_title="Gaslight Detector: Arena of Logic",
-    page_icon="🧠",
+    page_title="The Socratic Gaslighter",
+    page_icon="🤥",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded", # Keep sidebar open for real-time tracking
 )
 
 # Initialize the Gemini Client using Streamlit Secrets
@@ -76,7 +76,7 @@ THESES = [
 ]
 
 # -------------------------------------------------------------------
-# 2. SEPARATED WIN COUNT TRACKING (SESSION PERSISTENT)
+# 2. PERSISTENT SEPARATED SCOREBOARD
 # -------------------------------------------------------------------
 if "wins_classic" not in st.session_state: st.session_state.wins_classic = 0
 if "wins_endless" not in st.session_state: st.session_state.wins_endless = 0
@@ -100,7 +100,7 @@ if "championship_round" not in st.session_state: st.session_state.championship_r
 if "processing" not in st.session_state: st.session_state.processing = False
 
 # -------------------------------------------------------------------
-# 3. LEVEL LOGIC & STREAK DETERMINATION
+# 3. ENGINE MECHANICS
 # -------------------------------------------------------------------
 def get_active_tier():
     if st.session_state.game_mode == "3-Round Championship":
@@ -121,9 +121,6 @@ CURRENT_TIER = get_active_tier()
 CURRENT_TITLE = get_tier_title(CURRENT_TIER)
 AVAILABLE_FALLACIES = LEVEL_1_FALLACIES if CURRENT_TIER == 1 else ALL_FALLACIES
 
-# -------------------------------------------------------------------
-# 4. GAME ENGINE WITH LANGUAGE DYNAMICS
-# -------------------------------------------------------------------
 def generate_dressed_gaslight(player_input=None):
     tier = CURRENT_TIER
     chosen = random.choice(SCENARIOS[tier])
@@ -131,7 +128,6 @@ def generate_dressed_gaslight(player_input=None):
     
     context_clause = f"The player just argued: '{player_input}'" if player_input else "This is the match opening."
     
-    # Simple language modifier block
     language_instruction = "Use elegant, dense, high-vocabulary, academic, and slightly pretentious English words."
     if st.session_state.language_mode == "Simple English":
         language_instruction = "Use extremely clear, basic, straightforward English words. Avoid complex vocabulary or long metaphors so that non-native speakers can follow easily."
@@ -139,7 +135,6 @@ def generate_dressed_gaslight(player_input=None):
     prompt = f"""
     You are the 'Socratic Gaslighter', a deeply smug, patronizing debater defending the absurd thesis: "{st.session_state.current_thesis}".
     {context_clause}
-    
     {language_instruction}
     
     Your next statement must be written to sound organic, passive-aggressive, and condescending, but behind the scenes it MUST execute this exact logic:
@@ -159,7 +154,6 @@ def process_deflection(selected_choices, user_text):
     targets = st.session_state.current_targets
     is_correct = sorted(selected_choices) == sorted(targets)
     
-    # Scale Damage profiles based on Level
     if CURRENT_TIER == 1: p_dmg, b_dmg = 25, 15
     elif CURRENT_TIER == 2: p_dmg, b_dmg = 20, 25
     else: p_dmg, b_dmg = 35, 35
@@ -217,56 +211,57 @@ def reset_match_state(keep_history=False):
     st.session_state.chat_history.append({"role": "ai", "text": first_retort})
 
 # -------------------------------------------------------------------
-# 5. UI STYLING ARCHITECTURE
+# 4. GLOBAL STYLING
 # -------------------------------------------------------------------
 st.markdown("""
 <style>
     .stApp { background-color: #0A0B0E; color: #E2E8F0; }
     .game-box { background-color: #12141C; border: 2px solid #1E293B; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-    .badge-l1 { background-color: #065F46; color: #34D399; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
-    .badge-l2 { background-color: #92400E; color: #FBBF24; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
-    .badge-l3 { background-color: #991B1B; color: #FCA5A5; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; }
+    .badge-l1 { background-color: #065F46; color: #34D399; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+    .badge-l2 { background-color: #92400E; color: #FBBF24; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+    .badge-l3 { background-color: #991B1B; color: #FCA5A5; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; }
     .chat-user { background-color: #1A1D29; border-left: 4px solid #38BDF8; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
     .chat-ai { background-color: #1E1525; border-left: 4px solid #F43F5E; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align: center; color: #F43F5E; font-weight:900;'>🧠 GASLIGHT DETECTOR</h1>", unsafe_allow_html=True)
-st.write("---")
-
 # -------------------------------------------------------------------
-# 6A. MAIN GAME LOBBY
+# PAGE 1: THE DESCRIPTION & LOBBY PANEL
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
+    st.markdown("<h1 style='text-align: center; color: #F43F5E; font-weight:900;'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #94A3B8;'>Dismantle logical structures, track fallacy anomalies, and preserve your structural sanity.</p>", unsafe_allow_html=True)
+    st.write("---")
+
     col_l, col_r = st.columns([2, 1])
     
     with col_l:
-        st.markdown("### 🎮 Arena Settings")
+        st.markdown("### 🎮 Arena Configurations")
         mode_select = st.radio("Select Match Variant:", ["Classic Duel", "Endless Mode (Survival)", "3-Round Championship"], horizontal=True)
         
         if mode_select == "Classic Duel":
-            st.info("🤺 **Classic Duel:** Standalone head-to-head. Pick your target level below.")
-            selected_tier = st.slider("Select Match Level:", 1, 3, 1)
+            st.info("辨 <b>Classic Duel:</b> Fixed, standalone mental bout. Pick your target difficulty below.")
+            selected_tier = st.slider("Select Match Level Target:", 1, 3, 1)
         elif mode_select == "Endless Mode (Survival)":
-            st.warning("💀 **Survival Mode:** Run an infinite gauntlet. Level upgrades switch automatically at 5 and 10 wins!")
+            st.warning("💀 <b>Survival Gauntlet:</b> Battle an endless loop of opponents. Fallacy difficulty triggers escalation automatically at 5 and 10 match wins!")
             selected_tier = 1
         else:
-            st.success("🏆 **Championship Tournament:** Three matches back-to-back (Round 1 = Level 1, Round 2 = Level 2, Round 3 = Level 3).")
+            st.success("🏆 <b>Championship Tournament:</b> Survive three consecutive rounds hard-scaled from Level 1 straight up to Level 3.")
             selected_tier = 1
 
         st.write("---")
-        st.markdown("#### Choose Argument Subject")
-        topic_pick = st.selectbox("Pick an absurd claim to dismantle:", THESES)
+        st.markdown("#### Choose Argument Premise")
+        topic_pick = st.selectbox("Pick an absurd thesis to neutralize:", THESES)
 
     with col_r:
         st.markdown("<div class='game-box'>", unsafe_allow_html=True)
-        st.markdown("#### 💾 SCOREBOARD SEPARATION")
-        st.write(f"📊 **Classic Duels won:** `{st.session_state.wins_classic}`")
-        st.write(f"📊 **Endless Survival streak:** `{st.session_state.wins_endless}`")
-        st.write(f"📊 **Championship Titles won:** `{st.session_state.wins_championship}`")
+        st.markdown("### 💾 PROFILE HISTORIC SCORECARD")
+        st.write(f"🤺 **Classic Duels Won:** `{st.session_state.wins_classic}`")
+        st.write(f"💀 **Endless Current Streak:** `{st.session_state.wins_endless}`")
+        st.write(f"🏆 **Championships Claimed:** `{st.session_state.wins_championship}`")
         st.markdown("</div>", unsafe_allow_html=True)
         
-    if st.button("🚨 ACCESS INITIALIZATION PANEL", use_container_width=True):
+    if st.button("🚨 ACCESS COMBAT INTERFACE PANEL", use_container_width=True):
         st.session_state.game_mode = mode_select
         st.session_state.lobby_level = selected_tier
         st.session_state.game_started = True
@@ -279,93 +274,107 @@ if not st.session_state.game_started:
     st.stop()
 
 # -------------------------------------------------------------------
-# 6B. ACTIVE PLAYING ARENA
+# PAGE 2: CLEAN ACTIVE PLAYING ARENA (LOBBY IS COMPLETELY HIDDEN)
 # -------------------------------------------------------------------
-# Interface Top Row Configuration
-col_h1, col_h2 = st.columns([3, 1])
-with col_h1:
-    st.markdown(f"#### 🎯 Target Thesis: *\"{st.session_state.current_thesis}\"*")
-with col_h2:
-    badge_style = "badge-l1" if CURRENT_TIER == 1 else ("badge-l2" if CURRENT_TIER == 2 else "badge-l3")
-    st.markdown(f"<div style='text-align:right;'><span class='{badge_style}'>{st.session_state.game_mode} | {CURRENT_TITLE}</span></div>", unsafe_allow_html=True)
-
-# Language Mode Setting Switch
-lang_col1, lang_col2 = st.columns([4, 1])
-with lang_col2:
-    st.session_state.language_mode = st.selectbox("Language Style:", ["Default", "Simple English"])
-
-# Health Controls Display
-c_pl, c_ai = st.columns(2)
-with c_pl:
-    st.markdown(f"🟢 **Your Credibility Framework:** {st.session_state.player_hp}%")
+# PERSISTENT STATS SIDEBAR (Guarantees zero scrolling required to see health/stats)
+with st.sidebar:
+    st.markdown("<h2 style='color:#F43F5E; text-align:center;'>🤥 Status Display</h2>", unsafe_allow_html=True)
+    st.write("---")
+    
+    # Live Health Gauges
+    st.markdown(f"🟢 **Your Credibility:** `{st.session_state.player_hp}%`")
     st.progress(st.session_state.player_hp / 100)
-with c_ai:
-    st.markdown(f"🔴 **Gaslighter Stability:** {st.session_state.boss_hp}%")
+    
+    st.markdown(f"🔴 **Gaslighter Stability:** `{st.session_state.boss_hp}%`")
     st.progress(st.session_state.boss_hp / 100)
-st.write("---")
+    
+    st.write("---")
+    st.markdown("### 📊 Active Match Info")
+    badge_style = "badge-l1" if CURRENT_TIER == 1 else ("badge-l2" if CURRENT_TIER == 2 else "badge-l3")
+    st.markdown(f"Variant: <span class='{badge_style}'>{st.session_state.game_mode}</span>", unsafe_allow_html=True)
+    st.markdown(f"Rank-Tier: **{CURRENT_TITLE} (Level {CURRENT_TIER})**")
+    
+    st.write("---")
+    # Real-Time UI Language Switch
+    st.session_state.language_mode = st.selectbox("Language Dialect Variant:", ["Default", "Simple English"])
+    
+    if st.button("🏳️ Abandon Match & Return to Lobby", use_container_width=True):
+        st.session_state.game_started = False
+        st.rerun()
 
-# Victory / Defeat Modal checks
+# --- MAIN ARENA ROW HEADER (STICKY POPUPS FIRST) ---
+st.markdown(f"### 🎯 Target Thesis: *\"{st.session_state.current_thesis}\"*")
+
+# CRITICAL BATTLE REPORT AT TOP - No more scrolling down to check turn effects!
+if st.session_state.battle_report:
+    rep_type, rep_msg = st.session_state.battle_report
+    if rep_type == "SUCCESS":
+        st.success(rep_msg)
+    else:
+        st.error(rep_msg)
+    st.session_state.battle_report = None
+
+# Game-Over Processing Overlay Interceptor
 if st.session_state.game_over:
     if st.session_state.game_result == "WIN":
         st.balloons()
-        st.success("🏆 **VICTORY!** You cleared the track and updated your profile scorecard records!")
+        st.success("🏆 **VICTORY CONQUERED!** The opponent's rhetoric has been pulverized. Your profile scorecard records have updated.")
     else:
-        st.error("💀 **DEFEAT.** You got completely gaslit.")
+        st.error("💀 **DEFEAT.** You got completely turned around and gaslit.")
         if st.session_state.game_mode == "Endless Mode (Survival)":
-            st.session_state.wins_endless = 0  # Reset endless record tracker down on failure
+            st.session_state.wins_endless = 0 # Reset streak on complete structural collapse
         
     if st.button("Return to Lobby Setup Panel", use_container_width=True):
         st.session_state.game_started = False
         st.rerun()
     st.stop()
 
-if st.session_state.battle_report:
-    rep_type, rep_msg = st.session_state.battle_report
-    if rep_type == "SUCCESS": st.success(rep_msg)
-    else: st.error(rep_msg)
-    st.session_state.battle_report = None
+# Split Layout: Feed Log Left, Tactical Control Matrix Right
+col_feed, col_matrix = st.columns([3, 2])
 
-# Primary Chat Log Feed Loop
-st.markdown("### 💬 Arena Feed Log")
-for msg in st.session_state.chat_history:
-    class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
-    speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
-    st.markdown(f"<div class='{class_name}'><b>{speaker}:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
+with col_feed:
+    st.markdown("### 💬 Arena Feed Log")
+    # Reversed display sequence option keeps latest text visible, or default layout rendering
+    for msg in st.session_state.chat_history:
+        class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
+        speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
+        st.markdown(f"<div class='{class_name}'><b>{speaker}:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
 
-# Turn Selection Matrix Configuration
-st.write("---")
-st.markdown("### 🕹️ Counter-Strike Configuration Grid")
-if CURRENT_TIER == 3:
-    st.markdown("<p style='color:#F43F5E; font-weight:bold; margin-top:-10px;'>⚠️ MEMORY CHALLENGE ACTIVE: Fallacy definitions are hidden. Select ALL active fallacies to survive!</p>", unsafe_allow_html=True)
+with col_matrix:
+    st.markdown("### 🕹️ Counter-Strike Matrix")
+    if CURRENT_TIER == 3:
+        st.markdown("<div style='background-color:#450A0A; padding:10px; border-left:4px solid #EF4444; border-radius:4px; font-weight:bold; color:#FCA5A5;'>⚠️ MEMORY CHALLENGE ACTIVE: Fallacy definitions are blacked out! Select ALL active fallacies to avoid critical damage!</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<p style='color:#94A3B8; font-size:13px;'>Check the box for the fallback tactic being run below to load your strike package.</p>", unsafe_allow_html=True)
 
-with st.form(key="combat_input_form", clear_on_submit=True):
-    user_argument = st.text_input("Provide your logic counter-response:", placeholder="Type a basic counter-argument...")
-    
-    choices_status = {}
-    f_keys = sorted(list(AVAILABLE_FALLACIES.keys()))
-    col_f1, col_f2 = st.columns(2)
-    
-    for idx, key in enumerate(f_keys):
-        with col_f1 if idx % 2 == 0 else col_f2:
+    with st.form(key="combat_input_form", clear_on_submit=True):
+        user_argument = st.text_input("Provide your argument stance output:", placeholder="Type your counter-argument response here...")
+        
+        choices_status = {}
+        f_keys = sorted(list(AVAILABLE_FALLACIES.keys()))
+        
+        for key in f_keys:
             if CURRENT_TIER == 3:
-                # Level 3: Hide definitions completely
+                # Level 3 Memory blackout mode
                 choices_status[key] = st.checkbox(f"**{key}**")
             else:
-                # Levels 1 and 2: Keep helpful definitions visible
-                choices_status[key] = st.checkbox(f"**{key}** — *{AVAILABLE_FALLACIES[key]}*")
-                
-    submit_turn = st.form_submit_button("💥 ENGAGE DEFLECTION ENGINE", use_container_width=True)
+                # Level 1 and 2 descriptive structural layout help
+                choices_status[key] = st.checkbox(f"**{key}**", help=AVAILABLE_FALLACIES[key])
+                st.markdown(f"<p style='color:#94A3B8; font-size:12px; margin-top:-10px; margin-left:28px; font-style:italic;'>{AVAILABLE_FALLACIES[key]}</p>", unsafe_allow_html=True)
+                    
+        submit_turn = st.form_submit_button("💥 ENGAGE COUNTER-DEFLECTION ACTION", use_container_width=True)
 
 if submit_turn:
     active_selections = [k for k, v in choices_status.items() if v]
     if not user_argument.strip():
-        st.warning("Provide a basic verbal response alongside your configuration choice markers!")
+        st.warning("Provide a basic written statement alongside your checkbox targets!")
     elif not active_selections:
-        st.warning("Choose at least one fallacy option item to route your counter-strike attack!")
+        st.warning("Load at least one targeted tactic onto the deflection rack!")
     else:
         st.session_state.processing = True
         st.rerun()
 
+# Async Engine Handling State
 if st.session_state.processing:
     active_selections = [k for k, v in choices_status.items() if v]
     process_deflection(active_selections, user_argument)
