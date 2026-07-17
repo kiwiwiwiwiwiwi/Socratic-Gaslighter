@@ -196,13 +196,17 @@ def judge_objection(selected_fallacy):
             break
 
     judge_prompt = f"""
-    You are an objective, fair logic tournament referee evaluating a debate performance.
-    The opponent just said: "{last_ai_response}"
+    You are an incredibly nonchalant, deeply bored, and slightly rude logic tournament referee. You hate your job and find both the player and the gaslighter exhausting.
+    The opponent said: "{last_ai_response}"
     The player objects and accuses them of committing this fallacy: **{selected_fallacy}** ({FALLACIES[selected_fallacy]}).
     
-    Is the player's accusation reasonably valid based on the text provided? (Keep in mind a sentence can contain multiple fallacies, if they spotted a legitimate one, rule it VALID).
-    Respond with exactly 'VALID' or 'INVALID' as the first word. 
-    Followed by a brief, 1-sentence explanation of why.
+    First, decide if the player's accusation is reasonably valid based on the text.
+    Respond with exactly 'VALID' or 'INVALID' as the first word.
+    
+    Then, deliver your verdict with peak nonchalance and a biting insult targeting the loser:
+    - If VALID: Throw a rude, insulting remark at the Gaslighter for using garbage, sloppy logic (e.g., calling their argument pathetic, unoriginal, or brainless) and state why the player is right.
+    - If INVALID: Roast the player brutally for making a completely wrong accusation and wasting your precious time, clearly stating what the actual logic failure was.
+    Keep your full response under 3 sentences.
     """
     
     try:
@@ -211,7 +215,7 @@ def judge_objection(selected_fallacy):
         explanation = verdict_resp.replace("VALID", "").replace("INVALID", "").strip(" :-,")
     except:
         is_valid = (selected_fallacy == st.session_state.current_fallacy)
-        explanation = f"Hidden intended target was {st.session_state.current_fallacy}."
+        explanation = f"Look, I'm too tired for this. The hidden target was {st.session_state.current_fallacy}. Deal with it."
 
     if is_valid:
         damage = 34
@@ -233,7 +237,7 @@ def judge_objection(selected_fallacy):
                 st.session_state.game_result = "WIN"
                 st.session_state.chat_history.append({"role": "ai", "text": f"💥 [FATAL ERROR] {generate_losing_line()}"})
         else:
-            st.session_state.strike_alert = ("SUCCESS", f"💥 STRIKE! The referee rules your objection valid! {explanation}")
+            st.session_state.strike_alert = ("SUCCESS", f"💥 **OBJECTION ALLOWED!**\n\n*📣 Referee:* {explanation}")
         st.session_state.current_fallacy = "" 
     else:
         penalty = 25
@@ -248,7 +252,7 @@ def judge_objection(selected_fallacy):
             
         st.session_state.strike_alert = (
             "FAIL", 
-            f"❌ **FALSE ACCUSATION!** (-{penalty}% HP)\n\n*Referee Verdict: {explanation}*"
+            f"❌ **FALSE ACCUSATION!** (-{penalty}% HP)\n\n*📣 Referee:* {explanation}"
         )
 
 # -------------------------------------------------------------------
