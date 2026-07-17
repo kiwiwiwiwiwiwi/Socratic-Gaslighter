@@ -338,7 +338,7 @@ if st.session_state.show_intro:
 # 4B. LOBBY CONFIGURATION SCREEN (PHASE 2)
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
-    st.info("🚨 **MOBILE PLAYERS:** Tap the tiny **chevron/arrow icon (>)** in the upper-left corner of your screen to open the **Fallacy Cheat Sheet** and the arena soundtrack!")
+    st.info("🚨 Tap the tiny **chevron/arrow icon (>)** in the upper-left corner of your screen to open the **Fallacy Cheat Sheet** and the arena soundtrack!")
     
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Configure Your Rhetorical Gauntlet</p>", unsafe_allow_html=True)
     
