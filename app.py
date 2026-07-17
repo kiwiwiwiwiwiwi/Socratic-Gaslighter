@@ -26,7 +26,15 @@ THESES = [
     "The moon is made of premium Swiss cheese, and NASA is hiding the crackers.",
     "Trees are actually alien exhaust pipes filtering out invisible spaceship fuel.",
     "Sleep is a scam invented by mattress companies to steal 8 hours of our day.",
-    "The oceans don't actually exist; it's just a very convincing liquid projection."
+    "The oceans don't actually exist; it's just a very convincing liquid projection.",
+    "Gravity is a social construct invented by shoe companies to sell more footwear.",
+    "Clouds are actually industrialized cotton candy operations masking aerial city grids.",
+    "Cats are liquid-based cartographers sent to map the structural integrity of our furniture.",
+    "The sun is just a massive LED light bulb, and the eclipse happens when they change the fuse.",
+    "Time moves backward on Tuesdays, but our brains lack the RAM to process it.",
+    "Rain is just the sky crying because your logical arguments are so deeply flawed.",
+    "Mountains are giant sleeping tortoises waiting for the ultimate cosmic whistle.",
+    "Dogs are undercover tax auditors analyzing our spending habits via aggressive sniffing."
 ]
 
 FALLACIES = {
@@ -145,7 +153,6 @@ def generate_losing_line():
 def start_next_endless_opponent():
     """Resets the Gaslighter for the next survival fight while preserving Player state."""
     st.session_state.endless_streak += 1
-    # Update high score instantly if current streak exceeds it
     if st.session_state.endless_streak > st.session_state.endless_high_score:
         st.session_state.endless_high_score = st.session_state.endless_streak
         
@@ -213,7 +220,21 @@ def judge_objection(selected_fallacy):
             st.session_state.player_hp = 0
             st.session_state.game_over = True
             st.session_state.game_result = "LOSE"
-        st.session_state.strike_alert = ("FAIL", f"❌ FALSE ACCUSATION! That wasn't a {selected_fallacy}. Your credibility drops by {penalty}%!")
+            
+        # Condescending mean phrases matching the mistake
+        insults = [
+            f"Imagine confusing basic logic with a {selected_fallacy}. Embarrassing.",
+            f"A child could see that wasn't a {selected_fallacy}, yet here you are.",
+            f"You read the cheat sheet upside down or what? That wasn't a {selected_fallacy}.",
+            f"Declaring a {selected_fallacy} out of thin air won't save your broken argument."
+        ]
+        chosen_insult = random.choice(insults)
+        
+        # Subtitle reveal showing exactly what it actually was
+        st.session_state.strike_alert = (
+            "FAIL", 
+            f"❌ **FALSE ACCUSATION!** (-{penalty}% HP)\n\n*\"{chosen_insult}\"*\n\n👉 **Actual Fallacy Committed:** {correct_fallacy}"
+        )
 
 # -------------------------------------------------------------------
 # 3. CUSTOM STYLING & UI
@@ -235,7 +256,6 @@ st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_al
 if not st.session_state.game_started:
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Welcome to the High-Stakes Logical Fallacy Arena!</p>", unsafe_allow_html=True)
     
-    # Showcase Persistent High Score prominently on Home Screen
     if st.session_state.endless_high_score > 0:
         st.markdown(f"<p style='text-align: center; font-size: 20px; color: #FFD700; font-weight: bold;'>🏆 Current Endless Mode High Score Streak: {st.session_state.endless_high_score} Opponents Defeated!</p>", unsafe_allow_html=True)
     
