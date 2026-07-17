@@ -19,26 +19,26 @@ try:
     api_key = st.secrets["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
 except Exception as e:
-    st.error("API Initialization Error: Make sure GEMINI_API_KEY is defined in your Streamlit secrets.")
+    st.error("API Initialization Error: Make sure GEMINI_API_KEY be defined in your Streamlit secrets.")
     st.stop()
 
 ACTIVE_MODEL = 'gemini-3.1-flash-lite'
 
 # --- LOGICAL DICTIONARY TIER MAPPING ---
 LEVEL_1_FALLACIES = {
-    "Strawman": "Twisting, oversimplifying, or completely changing your opponent's argument to make it easier to knock down.",
-    "Ad Hominem": "Bypassing the logic entirely to launch a personal attack on your opponent's intelligence, character, or tone.",
-    "Circular Reasoning": "An argument that takes its own conclusion as its starting premise. (e.g., 'X is true because X is true').",
-    "Moving the Goalposts": "An underhanded tactic where the criteria for a victory or proof is suddenly shifted after the original target was met.",
-    "False Dilemma": "Presenting a complex situation as an oversimplified black-and-white choice between two extreme options.",
-    "Slippery Slope": "Arguing without evidence that a small initial step will instantly cause a catastrophic, uncontrollable domino effect."
+    "Strawman": "Twisting or oversimplifying an argument to make it easier to knock down.",
+    "Ad Hominem": "Bypassing the logic to launch a personal attack on character or tone.",
+    "Circular Reasoning": "An argument that takes its own conclusion as its starting premise.",
+    "Moving the Goalposts": "Underhandedly shifting the criteria of proof after it has been met.",
+    "False Dilemma": "Presenting a complex situation as a basic black-and-white choice.",
+    "Slippery Slope": "Arguing without evidence that one step leads to total catastrophe."
 }
 
 LEVEL_2_FALLACIES = {
-    "Red Herring": "Introducing an entirely irrelevant side-issue to distract from the actual topic being debated.",
-    "Appeal to Fear": "Using scare tactics, warnings of dark doom, or exaggerating danger to win an argument instead of using evidence.",
-    "Bandwagon": "Claiming that an argument or idea must be true simply because a huge crowd of people currently believe it.",
-    "Hasty Generalization": "Jumping to a massive, sweeping conclusion based on a tiny, single piece of unverified or isolated evidence."
+    "Red Herring": "Introducing an irrelevant side-issue to distract from the main topic.",
+    "Appeal to Fear": "Using scare tactics or exaggerating danger instead of using evidence.",
+    "Bandwagon": "Claiming an idea is true simply because a crowd of people believe it.",
+    "Hasty Generalization": "Jumping to a massive conclusion based on an isolated piece of evidence."
 }
 
 ALL_FALLACIES = {**LEVEL_1_FALLACIES, **LEVEL_2_FALLACIES}
@@ -97,7 +97,7 @@ if "game_over" not in st.session_state: st.session_state.game_over = False
 if "game_result" not in st.session_state: st.session_state.game_result = ""
 if "battle_report" not in st.session_state: st.session_state.battle_report = None
 if "championship_round" not in st.session_state: st.session_state.championship_round = 1
-if "processing" not in st.session_state: st.session_state.processing = False
+if "action_type" not in st.session_state: st.session_state.action_type = None
 
 # -------------------------------------------------------------------
 # 3. ENGINE MECHANICS
@@ -239,9 +239,9 @@ if not st.session_state.game_started:
         st.markdown("### 🎮 Arena Configurations")
         mode_select = st.radio("Select Match Variant:", ["Classic Duel", "Endless Mode (Survival)", "3-Round Championship"], horizontal=True)
         
-        # FIXED: Removed literal HTML tags <b> from text parameters to resolve raw string bugs
+        # FIXED: Markdown bold applied correctly, changed symbol to fencing emoji for Classic Mode
         if mode_select == "Classic Duel":
-            st.info("辨 **Classic Duel:** Fixed, standalone mental bout. Pick your target difficulty below.")
+            st.info("🤺 **Classic Duel:** Fixed, standalone mental bout. Pick your target difficulty below.")
             selected_tier = st.slider("Select Match Level Target:", 1, 3, 1)
         elif mode_select == "Endless Mode (Survival)":
             st.warning("💀 **Survival Gauntlet:** Battle an endless loop of opponents. Fallacy difficulty triggers escalation automatically at 5 and 10 match wins!")
@@ -257,7 +257,8 @@ if not st.session_state.game_started:
     with col_r:
         st.markdown("<div class='game-box'>", unsafe_allow_html=True)
         st.markdown("### 💾 PROFILE HISTORIC SCORECARD")
-        st.write(f"辨 **Classic Duels Won:** `{st.session_state.wins_classic}`")
+        st.write(f"🤺 **Classic Duels Won:** `{st.session_state.wins_classic}`")
+        # FIXED: Corrected win counts to Streak wording for Endless
         st.write(f"💀 **Endless Current Streak:** `{st.session_state.wins_endless}`")
         st.write(f"🏆 **Championships Claimed:** `{st.session_state.wins_championship}`")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -294,7 +295,6 @@ with st.sidebar:
     st.markdown(f"Rank-Tier: **{CURRENT_TITLE} (Level {CURRENT_TIER})**")
     
     st.write("---")
-    # CHANGED: Rebranded dropdown selector to Diction Profile with unique options
     st.session_state.language_mode = st.selectbox("Diction Profile:", ["Pretentious Elite", "Direct Cut"])
     
     if st.button("🏳️ Abandon Match & Return to Lobby", use_container_width=True):
@@ -323,54 +323,79 @@ if st.session_state.game_over:
         st.rerun()
     st.stop()
 
-col_feed, col_matrix = st.columns([3, 2])
+col_feed, col_matrix = st.columns([1, 1])
 
 with col_feed:
     st.markdown("### 💬 Arena Feed Log")
-    for msg in st.session_state.chat_history:
-        class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
-        speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
-        st.markdown(f"<div class='{class_name}'><b>{speaker}:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
+    # FIXED: Added a constrained height container box to keep layout matching 1 window screen size
+    with st.container(height=500):
+        for msg in st.session_state.chat_history:
+            class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
+            speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
+            st.markdown(f"<div class='{class_name}'><b>{speaker}:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
 
 with col_matrix:
-    st.markdown("### 🕹️ Counter-Strike Matrix")
+    st.markdown("### 🕹️ Action & Strategy Matrix")
     if CURRENT_TIER == 3:
-        st.markdown("<div style='background-color:#450A0A; padding:10px; border-left:4px solid #EF4444; border-radius:4px; font-weight:bold; color:#FCA5A5;'>⚠️ MEMORY CHALLENGE ACTIVE: Fallacy definitions are blacked out! Select ALL active fallacies to avoid critical damage!</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<p style='color:#94A3B8; font-size:13px;'>Check the box for the fallback tactic being run below to load your strike package.</p>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color:#450A0A; padding:10px; border-left:4px solid #EF4444; border-radius:4px; font-weight:bold; color:#FCA5A5; font-size:12px; margin-bottom:10px;'>⚠️ MEMORY CHALLENGE ACTIVE: Fallacy definitions are blacked out!</div>", unsafe_allow_html=True)
 
-    with st.form(key="combat_input_form", clear_on_submit=True):
-        user_argument = st.text_input("Provide your argument stance output:", placeholder="Type your counter-argument response here...")
+    # Combined input panel to control and track both submission types smoothly inside a container window
+    with st.container(height=500):
+        user_argument = st.text_input("Your Response / Counter-Argument:", placeholder="Type what you want to say to the gaslighter...")
+        
+        st.markdown("---")
+        st.markdown("**Load Accusation Targets (Optional):**")
         
         choices_status = {}
         f_keys = sorted(list(AVAILABLE_FALLACIES.keys()))
         
+        # FIXED: Removed help tooltip string parameters completely to avoid UI clutter
         for key in f_keys:
             if CURRENT_TIER == 3:
-                choices_status[key] = st.checkbox(f"**{key}**")
+                choices_status[key] = st.checkbox(f"**{key}**", key=f"chk_{key}")
             else:
-                choices_status[key] = st.checkbox(f"**{key}**", help=AVAILABLE_FALLACIES[key])
-                st.markdown(f"<p style='color:#94A3B8; font-size:12px; margin-top:-10px; margin-left:28px; font-style:italic;'>{AVAILABLE_FALLACIES[key]}</p>", unsafe_allow_html=True)
-                    
-        submit_turn = st.form_submit_button("💥 ENGAGE COUNTER-DEFLECTION ACTION", use_container_width=True)
+                choices_status[key] = st.checkbox(f"**{key}**", key=f"chk_{key}")
+                st.markdown(f"<p style='color:#94A3B8; font-size:12px; margin-top:-10px; margin-left:28px; font-style:italic; margin-bottom:4px;'>{AVAILABLE_FALLACIES[key]}</p>", unsafe_allow_html=True)
+        
+        st.write("")
+        c_btn1, c_btn2 = st.columns(2)
+        with c_btn1:
+            submit_accuse = st.button("💥 DEFLECT & ACCUSE", use_container_width=True)
+        with c_btn2:
+            submit_talk = st.button("💬 JUST CONVERSE", use_container_width=True)
 
-if submit_turn:
+# Trigger Action States based on which processing path was checked
+if submit_accuse:
     active_selections = [k for k, v in choices_status.items() if v]
     if not user_argument.strip():
-        st.warning("Provide a basic written statement alongside your checkbox targets!")
+        st.warning("Provide a written argument to route along with your accusation targets!")
     elif not active_selections:
-        st.warning("Load at least one targeted tactic onto the deflection rack!")
+        st.warning("Select at least one active fallacy checkbox target to submit an accusation!")
     else:
-        st.session_state.processing = True
+        st.session_state.action_type = ("ACCUSE", active_selections, user_argument)
         st.rerun()
 
-if st.session_state.processing:
-    active_selections = [k for k, v in choices_status.items() if v]
-    process_deflection(active_selections, user_argument)
+if submit_talk:
+    if not user_argument.strip():
+        st.warning("Provide a written counter-argument stance to say something back!")
+    else:
+        st.session_state.action_type = ("TALK", [], user_argument)
+        st.rerun()
+
+# Processing Route Executions
+if st.session_state.action_type:
+    act_mode, selections, txt = st.session_state.action_type
     
+    if act_mode == "ACCUSE":
+        process_deflection(selections, txt)
+    else:
+        # RESTORED: Pure conversation mechanics update path
+        st.session_state.chat_history.append({"role": "user", "text": f"💬 {txt}"})
+        st.session_state.battle_report = ("SUCCESS", "📝 **Argument Logged.** Conversation flows forward without health adjustments.")
+        
     if not st.session_state.game_over and st.session_state.boss_hp > 0:
-        next_retort = generate_dressed_gaslight(player_input=user_argument)
+        next_retort = generate_dressed_gaslight(player_input=txt)
         st.session_state.chat_history.append({"role": "ai", "text": next_retort})
         
-    st.session_state.processing = False
+    st.session_state.action_type = None
     st.rerun()
