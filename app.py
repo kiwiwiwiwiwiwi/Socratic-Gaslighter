@@ -3,43 +3,6 @@ import random
 import streamlit as st
 from google import genai
 
-def trigger_victory_rain():
-    """Rains triumph emojis down the screen instead of basic corporate balloons."""
-    st.html("""
-    <script>
-    // Access the Streamlit parent document to inject visual effects
-    const doc = window.parent.document;
-    if (!doc.getElementById('rhetorical-rain')) {
-        const style = doc.createElement('style');
-        style.id = 'rhetorical-rain';
-        style.innerHTML = `
-            @keyframes fall {
-                0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-                100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-            }
-            .emoji-drop {
-                position: fixed; top: -5vh; font-size: 2rem;
-                animation: fall 3s linear forwards; z-index: 99999; pointer-events: none;
-            }
-        `;
-        doc.head.appendChild(style);
-        
-        const emojis = ['💥', '🏆', '🧠', '🤥', '👑'];
-        for (let i = 0; i < 40; i++) {
-            setTimeout(() => {
-                const drop = doc.createElement('div');
-                drop.className = 'emoji-drop';
-                drop.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                drop.style.left = Math.random() * 100 + 'vw';
-                drop.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                doc.body.appendChild(drop);
-                setTimeout(() => drop.remove(), 4000);
-            }, i * 150);
-        }
-    }
-    </script>
-    """)
-
 # -------------------------------------------------------------------
 # 1. INITIALIZATION & SETUP
 # -------------------------------------------------------------------
@@ -151,6 +114,42 @@ with st.sidebar:
 # -------------------------------------------------------------------
 # 2. HELPER FUNCTIONS
 # -------------------------------------------------------------------
+def trigger_victory_rain():
+    """Rains triumph emojis down the screen instead of basic corporate balloons."""
+    st.html("""
+    <script>
+    const doc = window.parent.document;
+    if (!doc.getElementById('rhetorical-rain')) {
+        const style = doc.createElement('style');
+        style.id = 'rhetorical-rain';
+        style.innerHTML = `
+            @keyframes fall {
+                0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+            }
+            .emoji-drop {
+                position: fixed; top: -5vh; font-size: 2rem;
+                animation: fall 3s linear forwards; z-index: 99999; pointer-events: none;
+            }
+        `;
+        doc.head.appendChild(style);
+        
+        const emojis = ['💥', '🏆', '🧠', '🤥', '👑'];
+        for (let i = 0; i < 40; i++) {
+            setTimeout(() => {
+                const drop = doc.createElement('div');
+                drop.className = 'emoji-drop';
+                drop.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                doc.body.appendChild(drop);
+                setTimeout(() => drop.remove(), 4000);
+            }, i * 150);
+        }
+    }
+    </script>
+    """)
+
 def generate_gaslight_response(player_argument):
     chosen_fallacy = random.choice(list(FALLACIES.keys()))
     st.session_state.current_fallacy = chosen_fallacy
@@ -429,18 +428,26 @@ if st.session_state.game_over:
             st.markdown(f"<div class='ai-bubble'><b>🤥 Gaslighter:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
             
     if st.session_state.game_result == "WIN":
-        if st.session_state.game_mode == "3-Round Championship":
-            st.success("🏆 CHAMPIONSHIP CLEARED! You outmaneuvered the ultimate gaslighting grandmaster and claimed the trophy of logical supremacy!")
-        else:
-            st.success("🎉 TOTAL SYSTEM DEMOLITION! The Gaslighter's system has completely destabilized. Arrogance cannot withstand objective analysis!")
+        trigger_victory_rain()
         
-        st.markdown("<div class='achievement-box'>🎖️ <b>RHETORICAL ACHIEVEMENTS UNLOCKED</b><br>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style='text-align: center; border: 3px solid #00F0FF; padding: 25px; border-radius: 15px; background: linear-gradient(135deg, #0E1117, #1E1E2E); margin-bottom: 25px;'>
+            <h1 style='color: #00F0FF; margin: 0; font-size: 40px; font-weight: 900; letter-spacing: 2px;'>⚡ TOTAL SYSTEM DEMOLITION ⚡</h1>
+            <p style='color: #aaa; font-style: italic; margin-top: 10px;'>The Gaslighter's credibility matrix has completely collapsed under the weight of objective truth.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<div class='achievement-box'>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #FFD700; margin-top: 0;'>🎖️ DEBATE OVERVIEW & MEDALS</h3>", unsafe_allow_html=True)
+        
         if st.session_state.perfect_run:
-            st.markdown("✨ <b>[LOGICAL PARAGON]</b> - You won the entire match with 100% flawless structural accusations!", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 18px;'>✨ <b>[LOGICAL PARAGON]</b> - You cleared the arena without a single false accusation. Absolute logic flawless victory.</p>", unsafe_allow_html=True)
+            
         if st.session_state.game_mode == "3-Round Championship":
-            st.markdown("🥇 <b>[DEBATE LORD]</b> - Mastered scaling difficulty metrics and conquered the multi-tiered tournament bracket system.", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 18px;'>🥇 <b>[DEBATE MASTERMIND]</b> - Conquered all difficulty tiers and broke the grandmaster tournament code.</p>", unsafe_allow_html=True)
         else:
-            st.markdown("⚔️ <b>[GASLIGHT SURVIVOR]</b> - Proved truth defeats psychological projections in direct head-to-head combat.", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 18px;'>⚔️ <b>[GASLIGHT SURVIVOR]</b> - Brought truth to a psychological projection contest and stood victorious.</p>", unsafe_allow_html=True)
+            
         st.markdown("</div><br>", unsafe_allow_html=True)
     else:
         if st.session_state.game_mode == "Endless Mode (Survival)":
