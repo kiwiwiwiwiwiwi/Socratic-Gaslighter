@@ -47,9 +47,9 @@ FALLACIES = {
     "False Dilemma": "Forcing you to choose between two extreme options when multiple other valid choices exist.",
     "Slippery Slope": "Claiming that one tiny, harmless action will inevitably trigger a massive, ridiculous disaster chain.",
     "Appeal to Ignorance": "Arguing that a claim must be true because it hasn't yet been proven false (or vice-versa).",
-    "False Cause": "Claiming that because Event B happened after Event A, Event A must have caused Event B.",
+    "False Cause (Post Hoc)": "Claiming that because Event B happened after Event A, Event A must have caused Event B.",
     "Bandwagon Appeal": "Arguing that a claim is correct simply because a large group of people believe it.",
-    "Tu Quoque": "Avoiding criticism by turning it back on the accuser (e.g., 'You used a fallacy too!').",
+    "Tu Quoque (Hypocrisy Appeal)": "Avoiding criticism by turning it back on the accuser (e.g., 'You used a fallacy too!').",
     "Anecdotal Evidence": "Using an isolated, personal, or unverified story instead of a sound scientific argument.",
     "Special Pleading": "Applying double standards or inventing random exceptions when your logic falls flat."
 }
@@ -232,7 +232,7 @@ def advance_championship_round():
     st.session_state.chat_history = [{"role": "ai", "text": f"🏆 **ROUND {st.session_state.championship_round} BEGINS!**\n\n {opening_resp}"}]
     st.session_state.current_fallacy = random.choice(list(FALLACIES.keys()))
 
-def judge_objection(selected_fallacy):
+def judge_objection(selected_objection):
     """Uses the LLM as a dynamic referee to see if the player's objection is valid for the text."""
     last_ai_response = ""
     for msg in reversed(st.session_state.chat_history):
@@ -240,16 +240,22 @@ def judge_objection(selected_fallacy):
             last_ai_response = msg["text"]
             break
 
+    actual_fallacy = st.session_state.current_fallacy
+
     judge_prompt = f"""
     You are a deeply bored, nonchalant logic referee.
     Gaslighter said: "{last_ai_response}"
-    Player objects with: **{selected_fallacy}**
+    The true fallacy hidden in their statement is: **{actual_fallacy}**
+    Player objects and accused them of: **{selected_objection}**
 
+    Your response must follow these strict rules:
     First word must be 'VALID' or 'INVALID'.
-    Then, deliver a 1-sentence verdict. Talk directly TO the player. Refer to the opponent as "the Gaslighter".
-    - If VALID: Roast the Gaslighter's logic.
-    - If INVALID: Roast the player for being wrong.
-    CRITICAL: Your entire explanation MUST be ONE short sentence (under 15 words). No paragraphs! No yapping! Make it snappy.
+    Then, deliver a 1-sentence verdict explaining why. Talk directly to the player (the accuser) and refer to the opponent as "the Gaslighter".
+    
+    CRITICAL INSTRUCTIONS FOR 'INVALID':
+    If the player's accusation is INVALID, your sentence MUST explicitly state what the correct hidden fallacy actually was (e.g., "INVALID. Nice try, but the Gaslighter was actually using {actual_fallacy} here, not {selected_objection}.").
+    
+    Keep the whole response under 20 words. No yapping. No paragraphs. Keep it short and snappy.
     """
     
     try:
@@ -257,8 +263,11 @@ def judge_objection(selected_fallacy):
         is_valid = verdict_resp.upper().startswith("VALID")
         explanation = verdict_resp.replace("VALID", "").replace("INVALID", "").strip(" :-,")
     except:
-        is_valid = (selected_fallacy == st.session_state.current_fallacy)
-        explanation = f"Look, I'm too tired for this. The hidden target was {st.session_state.current_fallacy}. Deal with it."
+        is_valid = (selected_objection == actual_fallacy)
+        if is_valid:
+            explanation = f"Objection sustained. The Gaslighter was indeed using {actual_fallacy}!"
+        else:
+            explanation = f"Wrong. The Gaslighter was actually using **{actual_fallacy}**!"
 
     if is_valid:
         damage = 34
@@ -520,7 +529,7 @@ with st.form(key="battle_action_form", clear_on_submit=True):
             ["-- Don't Object, Just Argue Normal --"] + sorted(list(FALLACIES.keys())),
             disabled=st.session_state.processing_turn
         )
-        st.caption("*Need help? Open the sidebar in the top-left corner to view your persistent cabinet and Cheat Sheet.*")
+        st.caption("*Need help?* Open the sidebar in the top-left corner to view your persistent cabinet and Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
