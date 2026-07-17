@@ -47,9 +47,9 @@ FALLACIES = {
     "False Dilemma": "Forcing you to choose between two extreme options when multiple other valid choices exist.",
     "Slippery Slope": "Claiming that one tiny, harmless action will inevitably trigger a massive, ridiculous disaster chain.",
     "Appeal to Ignorance": "Arguing that a claim must be true because it hasn't yet been proven false (or vice-versa).",
-    "False Cause (Post Hoc)": "Claiming that because Event B happened after Event A, Event A must have caused Event B.",
+    "False Cause": "Claiming that because Event B happened after Event A, Event A must have caused Event B.",
     "Bandwagon Appeal": "Arguing that a claim is correct simply because a large group of people believe it.",
-    "Tu Quoque (Hypocrisy Appeal)": "Avoiding criticism by turning it back on the accuser (e.g., 'You used a fallacy too!').",
+    "Tu Quoque": "Avoiding criticism by turning it back on the accuser (e.g., 'You used a fallacy too!').",
     "Anecdotal Evidence": "Using an isolated, personal, or unverified story instead of a sound scientific argument.",
     "Special Pleading": "Applying double standards or inventing random exceptions when your logic falls flat."
 }
