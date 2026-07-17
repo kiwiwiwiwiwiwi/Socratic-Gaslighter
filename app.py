@@ -1,5 +1,6 @@
 import os
 import random
+import json
 import streamlit as st
 from google import genai
 
@@ -37,14 +38,30 @@ THESES = [
     "Dogs are undercover tax auditors analyzing our spending habits via aggressive sniffing."
 ]
 
+# EXPANDED FALLACY DICTIONARY (Now 12 options for maximum chaos)
 FALLACIES = {
-    "Strawman": "Exaggerating or changing your argument to make it easier to attack.",
-    "Ad Hominem": "Attacking your character or intelligence instead of addressing your logic.",
-    "Circular Reasoning": "Proving a point by just restating it (e.g., 'I am right because I am right').",
-    "Moving the Goalposts": "Changing the rules of winning after you've already proven them wrong.",
-    "False Dilemma": "Forcing you to choose between two extreme options when other choices exist.",
-    "Slippery Slope": "Claiming one tiny action will instantly trigger a massive disaster chain."
+    "Strawman": "Exaggerating, oversimplifying, or misrepresenting your argument to make it easier to attack.",
+    "Ad Hominem": "Attacking your character, intelligence, or tone instead of addressing your logic.",
+    "Circular Reasoning": "Proving a point by just restating the premise (e.g., 'I am right because I say I'm right').",
+    "Moving the Goalposts": "Changing the criteria for 'winning' or 'proving a point' after you've already met the original demand.",
+    "False Dilemma": "Forcing you to choose between two extreme options when multiple other valid choices exist.",
+    "Slippery Slope": "Claiming that one tiny, harmless action will inevitably trigger a massive, ridiculous disaster chain.",
+    "Appeal to Ignorance": "Arguing that a claim must be true because it hasn't yet been proven false (or vice-versa).",
+    "False Cause (Post Hoc)": "Claiming that because Event B happened after Event A, Event A must have caused Event B.",
+    "Bandwagon Appeal": "Arguing that a claim is correct simply because a large group of people believe it.",
+    "Tu Quoque (Hypocrisy Appeal)": "Avoiding criticism by turning it back on the accuser (e.g., 'You used a fallacy too!').",
+    "Anecdotal Evidence": "Using an isolated, personal, or unverified story instead of a sound scientific argument.",
+    "Special Pleading": "Applying double standards or inventing random exceptions when your logic falls flat."
 }
+
+# Persistent Trophy Room / Medals Setup
+if "trophy_cabinet" not in st.session_state:
+    st.session_state.trophy_cabinet = {
+        "logical_paragon": 0,    # Cleared a match with a perfect run
+        "championship_gold": 0,  # Won the 3-Round Tournament
+        "gaslight_survivor": 0,  # Won a classic duel
+        "endless_defender": 0    # Defeated 5+ enemies in survival
+    }
 
 # Initialize Session State Variables
 if "show_intro" not in st.session_state:
@@ -85,9 +102,19 @@ if "perfect_run" not in st.session_state:
 ACTIVE_MODEL = 'gemini-3.1-flash-lite'
 
 # -------------------------------------------------------------------
-# GLOBAL SIDEBAR (SHOWS CHEAT SHEET)
+# GLOBAL SIDEBAR (SHOWS PERSISTENT MEDALS & CHEAT SHEET)
 # -------------------------------------------------------------------
 with st.sidebar:
+    st.markdown("### 🏆 YOUR TROPHY ROOM")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        st.metric("✨ Paragons", st.session_state.trophy_cabinet["logical_paragon"])
+        st.metric("🥇 Champs", st.session_state.trophy_cabinet["championship_gold"])
+    with col_t2:
+        st.metric("⚔️ Survivors", st.session_state.trophy_cabinet["gaslight_survivor"])
+        st.metric("🛡️ Defenders", st.session_state.trophy_cabinet["endless_defender"])
+    
+    st.write("---")
     st.markdown("### 📖 Fallacy Cheat Sheet")
     st.write("Keep these definitions close during your debate:")
     for key, val in FALLACIES.items():
@@ -139,11 +166,11 @@ def generate_gaslight_response(player_argument):
     difficulty_modifier = ""
     if st.session_state.game_mode == "3-Round Championship":
         if st.session_state.championship_round == 1:
-            difficulty_modifier = "Keep the fallacy very simple, obvious, and almost cartoonish."
+            difficulty_modifier = "Keep the fallacy simple and easy to spot."
         elif st.session_state.championship_round == 2:
             difficulty_modifier = "Make the fallacy moderately tricky and hard to spot."
         elif st.session_state.championship_round == 3:
-            difficulty_modifier = "Make the fallacy extremely subtle, clever, and deeply woven into your argument."
+            difficulty_modifier = "Make the fallacy incredibly subtle and deeply woven into your argument."
 
     prompt = f"""
     You are the 'Socratic Gaslighter', a smug, insufferable debater who aggressively defends the thesis: "{st.session_state.thesis}".
@@ -242,15 +269,27 @@ def judge_objection(selected_fallacy):
         if st.session_state.ai_hp <= 0:
             st.session_state.ai_hp = 0
             
+            # Match Won - Save Medals in Session Cache
+            if st.session_state.perfect_run:
+                st.session_state.trophy_cabinet["logical_paragon"] += 1
+            
             if st.session_state.game_mode == "Endless Mode (Survival)":
                 start_next_endless_opponent()
+                if st.session_state.endless_streak >= 5:
+                    st.session_state.trophy_cabinet["endless_defender"] += 1
                 st.session_state.strike_alert = ("SUCCESS", f"💥 CRITICAL SUCCESS! You defeated the Gaslighter! Current Streak: {st.session_state.endless_streak}. Credibility partially restored (+30% HP)!")
             elif st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round < 3:
                 advance_championship_round()
                 st.session_state.strike_alert = ("SUCCESS", f"💥 ROUND WON! You conquered Round {st.session_state.championship_round-1}. Prepare for the next opponent!")
             else:
+                # Big Victory!
                 st.session_state.game_over = True
                 st.session_state.game_result = "WIN"
+                if st.session_state.game_mode == "3-Round Championship":
+                    st.session_state.trophy_cabinet["championship_gold"] += 1
+                else:
+                    st.session_state.trophy_cabinet["gaslight_survivor"] += 1
+                
                 st.session_state.chat_history.append({"role": "ai", "text": f"💥 [FATAL ERROR] {generate_losing_line()}"})
         else:
             st.session_state.strike_alert = ("SUCCESS", f"💥 **OBJECTION ALLOWED!**\n\n*📣 Referee:* {explanation}")
@@ -322,7 +361,7 @@ if st.session_state.show_intro:
 if not st.session_state.game_started:
     st.markdown("""
     <div style='text-align: center; background-color: #0E1624; border: 1px solid #1E3A8A; color: #60A5FA; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;'>
-        🚨 <b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open the <b>Fallacy Cheat Sheet</b>!
+        🚨 <b>MOBILE PLAYERS:</b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open your persistent <b>Trophy Cabinet</b> and <b>Cheat Sheet</b>!
     </div>
     """, unsafe_allow_html=True)
     
@@ -427,10 +466,10 @@ if st.session_state.game_over:
         st.markdown("<h3 style='color: #FFD700; margin-top: 0;'>🎖️ DEBATE OVERVIEW & MEDALS</h3>", unsafe_allow_html=True)
         
         if st.session_state.perfect_run:
-            st.markdown("<p style='font-size: 18px;'>✨ <b>[LOGICAL PARAGON]</b> - You cleared the arena without a single false accusation. Absolute logic flawless victory.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 18px;'>✨ <b>[LOGICAL PARAGON]</b> - You cleared the arena without a single false accusation. Medal added to sidebar cabinet!</p>", unsafe_allow_html=True)
             
         if st.session_state.game_mode == "3-Round Championship":
-            st.markdown("<p style='font-size: 18px;'>🥇 <b>[DEBATE MASTERMIND]</b> - Conquered all difficulty tiers and broke the grandmaster tournament code.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 18px;'>🥇 <b>[DEBATE MASTERMIND]</b> - Conquered all difficulty tiers and won the Championship Gold!</p>", unsafe_allow_html=True)
         else:
             st.markdown("<p style='font-size: 18px;'>⚔️ <b>[GASLIGHT SURVIVOR]</b> - Brought truth to a psychological projection contest and stood victorious.</p>", unsafe_allow_html=True)
             
@@ -439,7 +478,7 @@ if st.session_state.game_over:
         if st.session_state.game_mode == "Endless Mode (Survival)":
             st.error(f"💀 DEFEAT... Your credibility collapsed. You finished with a grand Survival Streak of **{st.session_state.endless_streak}**!")
             if st.session_state.endless_streak >= 5:
-                st.markdown("<div class='achievement-box'>🎖️ <b>RHETORICAL ACHIEVEMENT UNLOCKED</b><br>🛡️ <b>[ENDLESS DEFENDER]</b> - Survived 5+ separate iterations of structural gaslighting waves before dynamic operational failure.</div><br>", unsafe_allow_html=True)
+                st.markdown("<div class='achievement-box'>🎖️ <b>RHETORICAL ACHIEVEMENT UNLOCKED</b><br>🛡️ <b>[ENDLESS DEFENDER]</b> - Survived 5+ separate iterations of structural gaslighting waves!</div><br>", unsafe_allow_html=True)
         else:
             st.error("💀 DEFEAT... You got completely gaslit. Your credibility hit 0%.")
         
@@ -478,10 +517,10 @@ with st.form(key="battle_action_form", clear_on_submit=True):
     with col_btn1:
         selected_objection = st.selectbox(
             "Want to object?",
-            ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
+            ["-- Don't Object, Just Argue Normal --"] + sorted(list(FALLACIES.keys())),
             disabled=st.session_state.processing_turn
         )
-        st.caption("*Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
+        st.caption("👈 *Need help? Open the sidebar in the top-left corner to view your persistent cabinet and Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
