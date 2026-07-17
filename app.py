@@ -85,27 +85,9 @@ if "perfect_run" not in st.session_state:
 ACTIVE_MODEL = 'gemini-3.1-flash-lite'
 
 # -------------------------------------------------------------------
-# GLOBAL SIDEBAR (PLAYS MUSIC EVERYWHERE & SHOWS CHEAT SHEET)
+# GLOBAL SIDEBAR (SHOWS CHEAT SHEET)
 # -------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 🎵 Arena Soundtrack")
-    st.write("Tune into the official Socratic debate synth theme:")
-    
-    music_source = "background_music.mp3"
-    if not os.path.exists(music_source):
-        music_source = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-    
-    try:
-        st.audio(
-            music_source, 
-            format="audio/mp3", 
-            loop=True, 
-            autoplay=False
-        )
-    except Exception as e:
-        st.info("💡 Unable to load soundtrack.")
-        
-    st.write("---")
     st.markdown("### 📖 Fallacy Cheat Sheet")
     st.write("Keep these definitions close during your debate:")
     for key, val in FALLACIES.items():
@@ -340,7 +322,7 @@ if st.session_state.show_intro:
 if not st.session_state.game_started:
     st.markdown("""
     <div style='text-align: center; background-color: #0E1624; border: 1px solid #1E3A8A; color: #60A5FA; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;'>
-        🚨 <b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open the <b>Fallacy Cheat Sheet</b> and the arena soundtrack!
+        🚨 <b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open the <b>Fallacy Cheat Sheet</b>!
     </div>
     """, unsafe_allow_html=True)
     
