@@ -95,7 +95,6 @@ if "chat_history" not in st.session_state: st.session_state.chat_history = []
 if "current_targets" not in st.session_state: st.session_state.current_targets = []
 if "game_over" not in st.session_state: st.session_state.game_over = False
 if "game_result" not in st.session_state: st.session_state.game_result = ""
-if "battle_report" not in st.session_state: st.session_state.battle_report = None
 if "championship_round" not in st.session_state: st.session_state.championship_round = 1
 if "action_type" not in st.session_state: st.session_state.action_type = None
 
@@ -158,7 +157,7 @@ def process_deflection(selected_choices, user_text):
     elif CURRENT_TIER == 2: p_dmg, b_dmg = 20, 25
     else: p_dmg, b_dmg = 35, 35
 
-    st.session_state.chat_history.append({"role": "user", "text": f"🛡️ [DEFLECT & ACCUSE: {', '.join(selected_choices)}] {user_text}"})
+    st.session_state.chat_history.append({"role": "user", "text": f"🛡️ [ACCUSATION: {', '.join(selected_choices)}] {user_text}"})
 
     if is_correct:
         st.session_state.boss_hp -= p_dmg
@@ -166,17 +165,16 @@ def process_deflection(selected_choices, user_text):
             st.session_state.boss_hp = 0
             handle_match_victory()
         else:
-            st.session_state.battle_report = ("SUCCESS", f"💥 **DIRECT HIT!** Parsed flawlessly! Dealt **{p_dmg} damage**!")
+            st.session_state.chat_history.append({"role": "system", "text": f"💥 <b>DIRECT HIT!</b> Parsed flawlessly! Dealt <b>{p_dmg} damage</b> to the Gaslighter."})
     else:
         st.session_state.player_hp -= b_dmg
         if st.session_state.player_hp <= 0:
             st.session_state.player_hp = 0
             st.session_state.game_over = True
             st.session_state.game_result = "LOSE"
-            st.session_state.battle_report = ("FAIL", "❌ **SYSTEM COLLAPSE!** Your credibility hit 0%.")
         else:
             joined_targets = ", ".join(targets)
-            st.session_state.battle_report = ("FAIL", f"❌ **FALSE ACCUSATION!** Took **{b_dmg} damage**! Hidden flaw: **{joined_targets}**.")
+            st.session_state.chat_history.append({"role": "system_error", "text": f"❌ <b>FALSE ACCUSATION!</b> You took <b>{b_dmg} damage</b>! Hidden flaw was: <b>{joined_targets}</b>."})
 
 def handle_match_victory():
     if st.session_state.game_mode == "Classic Duel":
@@ -188,7 +186,7 @@ def handle_match_victory():
         if st.session_state.championship_round < 3:
             st.session_state.championship_round += 1
             reset_match_state(keep_history=False)
-            st.session_state.battle_report = ("SUCCESS", f"🏆 **ROUND CONQUERED!** Advancing to Round {st.session_state.championship_round}! HP restored.")
+            st.session_state.chat_history.append({"role": "system", "text": f"🏆 <b>ROUND CONQUERED!</b> Advancing to Round {st.session_state.championship_round}! HP restored."})
         else:
             st.session_state.wins_championship += 1
             st.session_state.game_over = True
@@ -198,7 +196,7 @@ def handle_match_victory():
         st.session_state.wins_endless += 1
         st.session_state.player_hp = min(100, st.session_state.player_hp + 30)
         reset_match_state(keep_history=False)
-        st.session_state.battle_report = ("SUCCESS", f"💀 **OPPONENT DISMANTLED!** Current streak: {st.session_state.wins_endless}. Gained +30% HP!")
+        st.session_state.chat_history.append({"role": "system", "text": f"💀 <b>OPPONENT DISMANTLED!</b> Current streak: {st.session_state.wins_endless}. Gained +30% HP!"})
 
 def reset_match_state(keep_history=False):
     st.session_state.boss_hp = 100
@@ -228,8 +226,13 @@ st.markdown("""
     .badge-l1 { background-color: #065F46; color: #34D399; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
     .badge-l2 { background-color: #92400E; color: #FBBF24; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
     .badge-l3 { background-color: #991B1B; color: #FCA5A5; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
+    
+    /* Custom Chat Feeds */
     .chat-user { background-color: #1A1D29; border-left: 4px solid #38BDF8; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
     .chat-ai { background-color: #1E1525; border-left: 4px solid #F43F5E; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+    .chat-system { background-color: #064E3B; border-left: 4px solid #10B981; color: #D1FAE5; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+    .chat-system-error { background-color: #7F1D1D; border-left: 4px solid #EF4444; color: #FEE2E2; padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+    
     .fallacy-text { color: #94A3B8; font-size: 11px; margin-top: -6px; margin-bottom: 4px; font-style: italic; line-height: 1.1; }
 </style>
 """, unsafe_allow_html=True)
@@ -275,7 +278,6 @@ if not st.session_state.game_started:
         st.session_state.lobby_level = selected_tier
         st.session_state.game_started = True
         st.session_state.player_hp = 100
-        st.session_state.battle_report = None
         if mode_select == "3-Round Championship":
             st.session_state.championship_round = 1
         reset_match_state(keep_history=False)
@@ -310,12 +312,6 @@ with st.sidebar:
 
 st.markdown(f"### 🎯 Target Thesis: *\"{st.session_state.current_thesis}\"*")
 
-if st.session_state.battle_report:
-    rep_type, rep_msg = st.session_state.battle_report
-    if rep_type == "SUCCESS": st.success(rep_msg)
-    else: st.error(rep_msg)
-    st.session_state.battle_report = None
-
 if st.session_state.game_over:
     if st.session_state.game_result == "WIN":
         st.balloons()
@@ -335,17 +331,26 @@ col_feed, col_matrix = st.columns([1, 1])
 
 with col_feed:
     st.markdown("### 💬 Arena Feed Log")
-    # SWEET SPOT: Set to 460 to look beautifully large without triggering vertical scrolling
     with st.container(height=460):
         for msg in st.session_state.chat_history:
-            class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
-            speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
+            if msg["role"] == "user":
+                class_name = "chat-user"
+                speaker = "🧠 You"
+            elif msg["role"] == "ai":
+                class_name = "chat-ai"
+                speaker = "🤥 Gaslighter"
+            elif msg["role"] == "system":
+                class_name = "chat-system"
+                speaker = "📢 Referee"
+            else:
+                class_name = "chat-system-error"
+                speaker = "📢 Referee"
+                
             st.markdown(f"<div class='{class_name}'><b>{speaker}:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
 
 with col_matrix:
     st.markdown("### 🕹️ Action & Strategy Matrix")
     
-    # SWEET SPOT: Set to 460 to perfectly align with the left log and fill the page beautifully
     with st.container(height=460):
         user_argument = st.text_input("Your Counter-Argument Stance:", placeholder="Type your argument line here...", label_visibility="collapsed")
         
@@ -368,28 +373,20 @@ with col_matrix:
                     st.markdown(f"<div class='fallacy-text'>{AVAILABLE_FALLACIES[key]}</div>", unsafe_allow_html=True)
         
         st.write("")
-        c_btn1, c_btn2 = st.columns(2)
-        with c_btn1:
-            submit_accuse = st.button("💥 DEFLECT & ACCUSE", use_container_width=True)
-        with c_btn2:
-            submit_talk = st.button("🔥 FIRE BACK ARGUMENT", use_container_width=True)
+        submit_turn = st.button("🚀 SUBMIT STANCE", use_container_width=True)
 
-# Handle Submissions
-if submit_accuse:
-    active_selections = [k for k, v in choices_status.items() if v]
+# Handle Unified Submission
+if submit_turn:
     if not user_argument.strip():
-        st.warning("Provide a written argument statement alongside your tactical targets!")
-    elif not active_selections:
-        st.warning("Select at least one active fallacy checkbox target to launch an accusation!")
+        st.warning("Provide a written argument to submit your stance!")
     else:
-        st.session_state.action_type = ("ACCUSE", active_selections, user_argument)
-        st.rerun()
-
-if submit_talk:
-    if not user_argument.strip():
-        st.warning("Provide a written argument to hit back!")
-    else:
-        st.session_state.action_type = ("TALK", [], user_argument)
+        active_selections = [k for k, v in choices_status.items() if v]
+        if active_selections:
+            # Checkbox selected -> Accuse mode
+            st.session_state.action_type = ("ACCUSE", active_selections, user_argument)
+        else:
+            # Checkbox blank -> Conversation mode
+            st.session_state.action_type = ("TALK", [], user_argument)
         st.rerun()
 
 # Run Backend Turns
@@ -400,7 +397,7 @@ if st.session_state.action_type:
         process_deflection(selections, txt)
     else:
         st.session_state.chat_history.append({"role": "user", "text": f"🔥 {txt}"})
-        st.session_state.battle_report = ("SUCCESS", "📝 **Argument landed.** Conversation continues without damage calculations.")
+        st.session_state.chat_history.append({"role": "system", "text": "📝 <b>Argument landed.</b> Chat context updated."})
         
     if not st.session_state.game_over and st.session_state.boss_hp > 0:
         next_retort = generate_dressed_gaslight(player_input=txt)
