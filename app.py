@@ -430,7 +430,7 @@ with st.form(key="battle_action_form", clear_on_submit=True):
     
     col_btn1, col_btn2 = st.columns([3, 1])
     with col_btn1:
-       selected_objection = st.selectbox(
+        selected_objection = st.selectbox(
             "Want to object?",
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
             disabled=st.session_state.processing_turn
