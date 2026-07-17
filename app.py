@@ -446,13 +446,13 @@ with st.form(key="battle_action_form", clear_on_submit=True):
     )
     
     col_btn1, col_btn2 = st.columns([3, 1])
-    with col_btn1:
+   with col_btn1:
         selected_objection = st.selectbox(
             "Want to object?",
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
             disabled=st.session_state.processing_turn
         )
-        st.caption("*Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
+        st.caption("👈 *Need help? Open the sidebar in the top-left corner to view the Cheat Sheet.*")
     with col_btn2:
         st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         submit_action = st.form_submit_button(
@@ -467,6 +467,41 @@ if submit_action:
     else:
         st.session_state.processing_turn = True
         st.rerun()
+
+if st.session_state.processing_turn:
+    with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
+        if selected_objection == "-- Don't Object, Just Argue Normal --":
+            st.session_state.perfect_run = False
+            st.session_state.player_hp -= 10
+            if st.session_state.player_hp <= 0:
+                st.session_state.player_hp = 0
+                st.session_state.game_over = True
+                st.session_state.game_result = "LOSE"
+            
+            st.session_state.chat_history.append({"role": "user", "text": user_argument})
+            
+            # The referee steps in natively to complain about your boring gameplay
+            ref_yells = [
+                "Are you just going to let them talk to you like that? Call a fallacy!",
+                "Boring. You're just arguing in circles. Point out the flaw!",
+                "I'm falling asleep here. Use your cheat sheet or get off the stage.",
+                "You completely ignored their fallacy. Deducting points for wasting my time."
+            ]
+            st.session_state.strike_alert = (
+                "FAIL", 
+                f"⚠️ **MISSED OPPORTUNITY!** (-10% HP)\n\n*📣 Referee:* {random.choice(ref_yells)}"
+            )
+        else:
+            st.session_state.chat_history.append({"role": "user", "text": f"🚨 [OBJECTION: {selected_objection}] {user_argument}"})
+            judge_objection(selected_objection)
+
+    if not st.session_state.game_over:
+        with st.spinner("🤥 The Gaslighter is writing a smug, flawed retort..."):
+            new_ai_reply = generate_gaslight_response(user_argument)
+            st.session_state.chat_history.append({"role": "ai", "text": new_ai_reply})
+    
+    st.session_state.processing_turn = False
+    st.rerun()
 
 if st.session_state.processing_turn:
     with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
