@@ -397,7 +397,6 @@ if st.session_state.game_over:
         else:
             st.success("🎉 TOTAL SYSTEM DEMOLITION! The Gaslighter's system has completely destabilized. Arrogance cannot withstand objective analysis!")
         
-        # --- UNLOCKED RHETORICAL ACHIEVEMENTS ---
         st.markdown("<div class='achievement-box'>🎖️ <b>RHETORICAL ACHIEVEMENTS UNLOCKED</b><br>", unsafe_allow_html=True)
         if st.session_state.perfect_run:
             st.markdown("✨ <b>[LOGICAL PARAGON]</b> - You won the entire match with 100% flawless structural accusations!", unsafe_allow_html=True)
@@ -446,7 +445,7 @@ with st.form(key="battle_action_form", clear_on_submit=True):
     )
     
     col_btn1, col_btn2 = st.columns([3, 1])
-   with col_btn1:
+    with col_btn1:
         selected_objection = st.selectbox(
             "Want to object?",
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
@@ -480,7 +479,6 @@ if st.session_state.processing_turn:
             
             st.session_state.chat_history.append({"role": "user", "text": user_argument})
             
-            # The referee steps in natively to complain about your boring gameplay
             ref_yells = [
                 "Are you just going to let them talk to you like that? Call a fallacy!",
                 "Boring. You're just arguing in circles. Point out the flaw!",
@@ -491,30 +489,6 @@ if st.session_state.processing_turn:
                 "FAIL", 
                 f"⚠️ **MISSED OPPORTUNITY!** (-10% HP)\n\n*📣 Referee:* {random.choice(ref_yells)}"
             )
-        else:
-            st.session_state.chat_history.append({"role": "user", "text": f"🚨 [OBJECTION: {selected_objection}] {user_argument}"})
-            judge_objection(selected_objection)
-
-    if not st.session_state.game_over:
-        with st.spinner("🤥 The Gaslighter is writing a smug, flawed retort..."):
-            new_ai_reply = generate_gaslight_response(user_argument)
-            st.session_state.chat_history.append({"role": "ai", "text": new_ai_reply})
-    
-    st.session_state.processing_turn = False
-    st.rerun()
-
-if st.session_state.processing_turn:
-    with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
-        if selected_objection == "-- Don't Object, Just Argue Normal --":
-            st.session_state.perfect_run = False
-            st.session_state.player_hp -= 10
-            if st.session_state.player_hp <= 0:
-                st.session_state.player_hp = 0
-                st.session_state.game_over = True
-                st.session_state.game_result = "LOSE"
-            
-            st.session_state.chat_history.append({"role": "user", "text": user_argument})
-            st.session_state.strike_alert = ("FAIL", "⚠️ You argued normally but failed to call out their fallacy! Your HP slowly drains as they drag out the debate.")
         else:
             st.session_state.chat_history.append({"role": "user", "text": f"🚨 [OBJECTION: {selected_objection}] {user_argument}"})
             judge_objection(selected_objection)
