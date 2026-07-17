@@ -271,6 +271,16 @@ st.markdown("""
 
 st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
 
+/* Make the entire app background cleaner and style the progress bars */
+.stApp {
+    background-color: #0B0C10;
+}
+/* Style Streamlit alert boxes to look like vintage arcade terminals */
+.stAlert {
+    border-radius: 8px !important;
+    border: 1px solid #1f2937 !important;
+}
+
 # -------------------------------------------------------------------
 # 4A. GAME TITLE SCREEN / DESCRIPTION (PHASE 1)
 # -------------------------------------------------------------------
