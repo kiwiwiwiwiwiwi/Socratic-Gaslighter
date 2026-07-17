@@ -26,19 +26,19 @@ ACTIVE_MODEL = 'gemini-3.1-flash-lite'
 
 # --- LOGICAL DICTIONARY TIER MAPPING ---
 LEVEL_1_FALLACIES = {
-    "Strawman": "Twisting or oversimplifying an argument to make it easier to knock down.",
-    "Ad Hominem": "Bypassing the logic to launch a personal attack on character or tone.",
-    "Circular Reasoning": "An argument that takes its own conclusion as its starting premise.",
-    "Moving the Goalposts": "Underhandedly shifting the criteria of proof after it has been met.",
-    "False Dilemma": "Presenting a complex situation as a basic black-and-white choice.",
-    "Slippery Slope": "Arguing without evidence that one step leads to total catastrophe."
+    "Strawman": "Twisting/oversimplifying an argument to knock it down.",
+    "Ad Hominem": "Launching a personal attack on character or tone.",
+    "Circular Reasoning": "An argument that uses its conclusion as its premise.",
+    "Moving the Goalposts": "Shifting the criteria of proof after it has been met.",
+    "False Dilemma": "Presenting a complex situation as a simple binary choice.",
+    "Slippery Slope": "Arguing without evidence that one step leads to catastrophe."
 }
 
 LEVEL_2_FALLACIES = {
-    "Red Herring": "Introducing an irrelevant side-issue to distract from the main topic.",
-    "Appeal to Fear": "Using scare tactics or exaggerating danger instead of using evidence.",
-    "Bandwagon": "Claiming an idea is true simply because a crowd of people believe it.",
-    "Hasty Generalization": "Jumping to a massive conclusion based on an isolated piece of evidence."
+    "Red Herring": "Introducing an irrelevant issue to distract from the topic.",
+    "Appeal to Fear": "Using scare tactics or exaggerating real danger.",
+    "Bandwagon": "Claiming an idea is true because a crowd believes it.",
+    "Hasty Generalization": "Jumping to conclusions based on isolated evidence."
 }
 
 ALL_FALLACIES = {**LEVEL_1_FALLACIES, **LEVEL_2_FALLACIES}
@@ -76,7 +76,7 @@ THESES = [
 ]
 
 # -------------------------------------------------------------------
-# 2. PERSISTENT SEPARATED SCOREBOARD
+# 2. PERSISTENT SCOREBOARD
 # -------------------------------------------------------------------
 if "wins_classic" not in st.session_state: st.session_state.wins_classic = 0
 if "wins_endless" not in st.session_state: st.session_state.wins_endless = 0
@@ -130,7 +130,7 @@ def generate_dressed_gaslight(player_input=None):
     
     language_instruction = "Use elegant, dense, high-vocabulary, academic, and highly pretentious English words."
     if st.session_state.language_mode == "Direct Cut":
-        language_instruction = "Use extremely clear, basic, plain, and straightforward English words. Keep the sentence structure simple so non-native speakers can follow without friction."
+        language_instruction = "Use extremely clear, basic, plain, and straightforward English words. Keep the sentence structure simple."
 
     prompt = f"""
     You are the 'Socratic Gaslighter', a deeply smug, patronizing debater defending the absurd thesis: "{st.session_state.current_thesis}".
@@ -148,7 +148,7 @@ def generate_dressed_gaslight(player_input=None):
         response = client.models.generate_content(model=ACTIVE_MODEL, contents=prompt)
         return response.text.strip()
     except:
-        return f"Oh, typical. Your mental capacity has bottlenecked my processing grid. (Template: {chosen['core_logic']})"
+        return f"Oh, typical. Your mental capacity has bottlenecked my processing grid."
 
 def process_deflection(selected_choices, user_text):
     targets = st.session_state.current_targets
@@ -158,7 +158,7 @@ def process_deflection(selected_choices, user_text):
     elif CURRENT_TIER == 2: p_dmg, b_dmg = 20, 25
     else: p_dmg, b_dmg = 35, 35
 
-    st.session_state.chat_history.append({"role": "user", "text": f"🛡️ [DEFLECT ATTEMPT: {', '.join(selected_choices)}] {user_text}"})
+    st.session_state.chat_history.append({"role": "user", "text": f"🛡️ [DEFLECT & ACCUSE: {', '.join(selected_choices)}] {user_text}"})
 
     if is_correct:
         st.session_state.boss_hp -= p_dmg
@@ -166,7 +166,7 @@ def process_deflection(selected_choices, user_text):
             st.session_state.boss_hp = 0
             handle_match_victory()
         else:
-            st.session_state.battle_report = ("SUCCESS", f"💥 **DIRECT HIT!** You parsed the logic block perfectly. Dealt **{p_dmg} damage**!")
+            st.session_state.battle_report = ("SUCCESS", f"💥 **DIRECT HIT!** Parsed flawlessly! Dealt **{p_dmg} damage**!")
     else:
         st.session_state.player_hp -= b_dmg
         if st.session_state.player_hp <= 0:
@@ -176,7 +176,7 @@ def process_deflection(selected_choices, user_text):
             st.session_state.battle_report = ("FAIL", "❌ **SYSTEM COLLAPSE!** Your credibility hit 0%.")
         else:
             joined_targets = ", ".join(targets)
-            st.session_state.battle_report = ("FAIL", f"❌ **FALSE ACCUSATION!** You sustained **{b_dmg} damage**! The actual hidden flaw was **{joined_targets}**.")
+            st.session_state.battle_report = ("FAIL", f"❌ **FALSE ACCUSATION!** Took **{b_dmg} damage**! Hidden flaw: **{joined_targets}**.")
 
 def handle_match_victory():
     if st.session_state.game_mode == "Classic Duel":
@@ -188,7 +188,7 @@ def handle_match_victory():
         if st.session_state.championship_round < 3:
             st.session_state.championship_round += 1
             reset_match_state(keep_history=False)
-            st.session_state.battle_report = ("SUCCESS", f"🏆 **ROUND CONQUERED!** Advancing to Tournament Round {st.session_state.championship_round}! Your HP has been reset to 100%.")
+            st.session_state.battle_report = ("SUCCESS", f"🏆 **ROUND CONQUERED!** Advancing to Round {st.session_state.championship_round}! HP restored.")
         else:
             st.session_state.wins_championship += 1
             st.session_state.game_over = True
@@ -198,7 +198,7 @@ def handle_match_victory():
         st.session_state.wins_endless += 1
         st.session_state.player_hp = min(100, st.session_state.player_hp + 30)
         reset_match_state(keep_history=False)
-        st.session_state.battle_report = ("SUCCESS", f"💀 **OPPONENT DISMANTLED!** Current survival streak is now {st.session_state.wins_endless}. Credibility patched (+30% HP)!")
+        st.session_state.battle_report = ("SUCCESS", f"💀 **OPPONENT DISMANTLED!** Current streak: {st.session_state.wins_endless}. Gained +30% HP!")
 
 def reset_match_state(keep_history=False):
     st.session_state.boss_hp = 100
@@ -217,16 +217,17 @@ st.markdown("""
 <style>
     .stApp { background-color: #0A0B0E; color: #E2E8F0; }
     .game-box { background-color: #12141C; border: 2px solid #1E293B; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-    .badge-l1 { background-color: #065F46; color: #34D399; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-    .badge-l2 { background-color: #92400E; color: #FBBF24; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-    .badge-l3 { background-color: #991B1B; color: #FCA5A5; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-    .chat-user { background-color: #1A1D29; border-left: 4px solid #38BDF8; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
-    .chat-ai { background-color: #1E1525; border-left: 4px solid #F43F5E; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+    .badge-l1 { background-color: #065F46; color: #34D399; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
+    .badge-l2 { background-color: #92400E; color: #FBBF24; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
+    .badge-l3 { background-color: #991B1B; color: #FCA5A5; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px; }
+    .chat-user { background-color: #1A1D29; border-left: 4px solid #38BDF8; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
+    .chat-ai { background-color: #1E1525; border-left: 4px solid #F43F5E; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
+    .fallacy-text { color: #94A3B8; font-size: 11px; margin-top: -6px; margin-bottom: 6px; font-style: italic; line-height: 1.2; }
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# PAGE 1: THE DESCRIPTION & LOBBY PANEL
+# PAGE 1: DESCRIPTION & LOBBY PANEL
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
     st.markdown("<h1 style='text-align: center; color: #F43F5E; font-weight:900;'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
@@ -239,15 +240,14 @@ if not st.session_state.game_started:
         st.markdown("### 🎮 Arena Configurations")
         mode_select = st.radio("Select Match Variant:", ["Classic Duel", "Endless Mode (Survival)", "3-Round Championship"], horizontal=True)
         
-        # FIXED: Markdown bold applied correctly, changed symbol to fencing emoji for Classic Mode
         if mode_select == "Classic Duel":
             st.info("🤺 **Classic Duel:** Fixed, standalone mental bout. Pick your target difficulty below.")
             selected_tier = st.slider("Select Match Level Target:", 1, 3, 1)
         elif mode_select == "Endless Mode (Survival)":
-            st.warning("💀 **Survival Gauntlet:** Battle an endless loop of opponents. Fallacy difficulty triggers escalation automatically at 5 and 10 match wins!")
+            st.warning("💀 **Survival Gauntlet:** Battle an endless loop of opponents. Difficulty scales automatically at streak 5 and 10!")
             selected_tier = 1
         else:
-            st.success("🏆 **Championship Tournament:** Survive three consecutive rounds hard-scaled from Level 1 straight up to Level 3.")
+            st.success("🏆 **Championship Tournament:** Survive three consecutive rounds hard-scaled from Level 1 up to Level 3.")
             selected_tier = 1
 
         st.write("---")
@@ -258,7 +258,6 @@ if not st.session_state.game_started:
         st.markdown("<div class='game-box'>", unsafe_allow_html=True)
         st.markdown("### 💾 PROFILE HISTORIC SCORECARD")
         st.write(f"🤺 **Classic Duels Won:** `{st.session_state.wins_classic}`")
-        # FIXED: Corrected win counts to Streak wording for Endless
         st.write(f"💀 **Endless Current Streak:** `{st.session_state.wins_endless}`")
         st.write(f"🏆 **Championships Claimed:** `{st.session_state.wins_championship}`")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -276,7 +275,7 @@ if not st.session_state.game_started:
     st.stop()
 
 # -------------------------------------------------------------------
-# PAGE 2: CLEAN ACTIVE PLAYING ARENA
+# PAGE 2: COMBAT ARENA
 # -------------------------------------------------------------------
 with st.sidebar:
     st.markdown("<h2 style='color:#F43F5E; text-align:center;'>🤥 Status Display</h2>", unsafe_allow_html=True)
@@ -323,12 +322,12 @@ if st.session_state.game_over:
         st.rerun()
     st.stop()
 
+# 50/50 Split Layout
 col_feed, col_matrix = st.columns([1, 1])
 
 with col_feed:
     st.markdown("### 💬 Arena Feed Log")
-    # FIXED: Added a constrained height container box to keep layout matching 1 window screen size
-    with st.container(height=500):
+    with st.container(height=450):
         for msg in st.session_state.chat_history:
             class_name = "chat-user" if msg["role"] == "user" else "chat-ai"
             speaker = "🧠 You" if msg["role"] == "user" else "🤥 Gaslighter"
@@ -336,62 +335,64 @@ with col_feed:
 
 with col_matrix:
     st.markdown("### 🕹️ Action & Strategy Matrix")
-    if CURRENT_TIER == 3:
-        st.markdown("<div style='background-color:#450A0A; padding:10px; border-left:4px solid #EF4444; border-radius:4px; font-weight:bold; color:#FCA5A5; font-size:12px; margin-bottom:10px;'>⚠️ MEMORY CHALLENGE ACTIVE: Fallacy definitions are blacked out!</div>", unsafe_allow_html=True)
-
-    # Combined input panel to control and track both submission types smoothly inside a container window
-    with st.container(height=500):
-        user_argument = st.text_input("Your Response / Counter-Argument:", placeholder="Type what you want to say to the gaslighter...")
+    
+    with st.container(height=450):
+        user_argument = st.text_input("Your Counter-Argument Stance:", placeholder="Type your argument line here...")
         
         st.markdown("---")
-        st.markdown("**Load Accusation Targets (Optional):**")
+        if CURRENT_TIER == 3:
+            st.markdown("<span style='color:#EF4444; font-size:12px; font-weight:bold;'>⚠️ MEMORY CHALLENGE ACTIVE (Definitions Blacked Out)</span>", unsafe_allow_html=True)
+        else:
+            st.markdown("<span style='color:#94A3B8; font-size:12px;'>Select checkboxes only if accusing:</span>", unsafe_allow_html=True)
         
         choices_status = {}
         f_keys = sorted(list(AVAILABLE_FALLACIES.keys()))
         
-        # FIXED: Removed help tooltip string parameters completely to avoid UI clutter
-        for key in f_keys:
-            if CURRENT_TIER == 3:
+        # FIXED: Distributed checkboxes into a 2-column grid layout to eliminate scrolling
+        grid_col1, grid_col2 = st.columns(2)
+        
+        for idx, key in enumerate(f_keys):
+            target_col = grid_col1 if idx % 2 == 0 else grid_col2
+            with target_col:
                 choices_status[key] = st.checkbox(f"**{key}**", key=f"chk_{key}")
-            else:
-                choices_status[key] = st.checkbox(f"**{key}**", key=f"chk_{key}")
-                st.markdown(f"<p style='color:#94A3B8; font-size:12px; margin-top:-10px; margin-left:28px; font-style:italic; margin-bottom:4px;'>{AVAILABLE_FALLACIES[key]}</p>", unsafe_allow_html=True)
+                if CURRENT_TIER != 3:
+                    st.markdown(f"<div class='fallacy-text'>{AVAILABLE_FALLACIES[key]}</div>", unsafe_allow_html=True)
         
         st.write("")
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
             submit_accuse = st.button("💥 DEFLECT & ACCUSE", use_container_width=True)
         with c_btn2:
-            submit_talk = st.button("💬 JUST CONVERSE", use_container_width=True)
+            # BRANDING FIXED: Changed from weak "Just Converse" to aggressive "Fire Back Argument"
+            submit_talk = st.button("🔥 FIRE BACK ARGUMENT", use_container_width=True)
 
-# Trigger Action States based on which processing path was checked
+# Handle Submissions
 if submit_accuse:
     active_selections = [k for k, v in choices_status.items() if v]
     if not user_argument.strip():
-        st.warning("Provide a written argument to route along with your accusation targets!")
+        st.warning("Provide a written argument statement alongside your tactical targets!")
     elif not active_selections:
-        st.warning("Select at least one active fallacy checkbox target to submit an accusation!")
+        st.warning("Select at least one active fallacy checkbox target to launch an accusation!")
     else:
         st.session_state.action_type = ("ACCUSE", active_selections, user_argument)
         st.rerun()
 
 if submit_talk:
     if not user_argument.strip():
-        st.warning("Provide a written counter-argument stance to say something back!")
+        st.warning("Provide a written argument to hit back!")
     else:
         st.session_state.action_type = ("TALK", [], user_argument)
         st.rerun()
 
-# Processing Route Executions
+# Run Backend Turns
 if st.session_state.action_type:
     act_mode, selections, txt = st.session_state.action_type
     
     if act_mode == "ACCUSE":
         process_deflection(selections, txt)
     else:
-        # RESTORED: Pure conversation mechanics update path
-        st.session_state.chat_history.append({"role": "user", "text": f"💬 {txt}"})
-        st.session_state.battle_report = ("SUCCESS", "📝 **Argument Logged.** Conversation flows forward without health adjustments.")
+        st.session_state.chat_history.append({"role": "user", "text": f"🔥 {txt}"})
+        st.session_state.battle_report = ("SUCCESS", "📝 **Argument landed.** Conversation continues without damage calculations.")
         
     if not st.session_state.game_over and st.session_state.boss_hp > 0:
         next_retort = generate_dressed_gaslight(player_input=txt)
