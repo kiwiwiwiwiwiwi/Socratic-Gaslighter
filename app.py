@@ -340,7 +340,7 @@ if st.session_state.show_intro:
 if not st.session_state.game_started:
     st.markdown("""
     <div style='text-align: center; background-color: #0E1624; border: 1px solid #1E3A8A; color: #60A5FA; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;'>
-        🚨 <b>MOBILE PLAYERS:</b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open the <b>Fallacy Cheat Sheet</b> and the arena soundtrack!
+        🚨 <b> Tap the tiny <b>chevron/arrow icon (&gt;)</b> in the upper-left corner of your screen to open the <b>Fallacy Cheat Sheet</b> and the arena soundtrack!
     </div>
     """, unsafe_allow_html=True)
     
