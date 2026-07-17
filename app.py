@@ -283,25 +283,25 @@ if submit_action:
         st.session_state.processing_turn = False
         st.rerun()
 # -------------------------------------------------------------------
-# 6. SIDEBAR SOUNDTRACK & CHEAT SHEET
-# -------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("### 🎵 Arena Soundtrack")
-    st.write("Tune into the official Socratic debate synth theme:")
-    
-    # This renders the audio player widget and handles errors gracefully
-    try:
-        st.audio(
-            "background_music.mp3", 
-            format="audio/mp3", 
-            loop=True, 
-            autoplay=False
-        )
-    except Exception as e:
-        st.info("💡 To play music, drop your Suno MP3 named 'background_music.mp3' into your project folder!")
+    # 6. SIDEBAR SOUNDTRACK & CHEAT SHEET
+    # -------------------------------------------------------------------
+    with st.sidebar:
+        st.markdown("### 🎵 Arena Soundtrack")
+        st.write("Tune into the official Socratic debate synth theme:")
         
-    st.write("---")
-    st.markdown("### 📖 Fallacy Cheat Sheet")
-    st.write("Keep these definitions close during your debate:")
-    for key, val in FALLACIES.items():
-        st.markdown(f"**• {key}**:\n*{val}*")
+        # WE USE A STABLE PUBLIC SYNTHWAVE WEB LINK DIRECTLY
+        try:
+            st.audio(
+                "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", 
+                format="audio/mp3", 
+                loop=True, 
+                autoplay=False
+            )
+        except Exception as e:
+            st.info("💡 Unable to load the arena soundtrack.")
+            
+        st.write("---")
+        st.markdown("### 📖 Fallacy Cheat Sheet")
+        st.write("Keep these definitions close during your debate:")
+        for key, val in FALLACIES.items():
+            st.markdown(f"**• {key}**:\n*{val}*")
