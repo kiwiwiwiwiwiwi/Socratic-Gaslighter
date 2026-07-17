@@ -41,9 +41,11 @@ FALLACIES = {
 # Dynamic help text for selectbox tooltip
 help_tooltip_text = "📚 QUICK FALLACY GUIDE:\n\n" + "\n".join([f"• {k}: {v}" for k, v in FALLACIES.items()])
 
-# Initialize Session State Variables if they don't exist
+# Initialize Session State Variables
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
+if "game_mode" not in st.session_state:
+    st.session_state.game_mode = "Classic Duel"  # Classic, Endless, or Championship
 if "player_hp" not in st.session_state:
     st.session_state.player_hp = 100
 if "ai_hp" not in st.session_state:
@@ -63,6 +65,12 @@ if "strike_alert" not in st.session_state:
 if "processing_turn" not in st.session_state:
     st.session_state.processing_turn = False
 
+# Game-mode specific tracking variables
+if "endless_streak" not in st.session_state:
+    st.session_state.endless_streak = 0
+if "championship_round" not in st.session_state:
+    st.session_state.championship_round = 1  # Round 1, 2, or 3
+
 # -------------------------------------------------------------------
 # 2. HELPER FUNCTIONS
 # -------------------------------------------------------------------
@@ -70,11 +78,22 @@ def generate_gaslight_response(player_argument):
     chosen_fallacy = random.choice(list(FALLACIES.keys()))
     st.session_state.current_fallacy = chosen_fallacy
 
+    # Scaled difficulty prompts based on championship round
+    difficulty_modifier = ""
+    if st.session_state.game_mode == "3-Round Championship":
+        if st.session_state.championship_round == 1:
+            difficulty_modifier = "Keep the fallacy very simple, obvious, and almost cartoonish."
+        elif st.session_state.championship_round == 2:
+            difficulty_modifier = "Make the fallacy moderately tricky and hard to spot."
+        elif st.session_state.championship_round == 3:
+            difficulty_modifier = "Make the fallacy extremely subtle, clever, and deeply woven into your argument."
+
     prompt = f"""
     You are the 'Socratic Gaslighter', a smug, insufferable debater who aggressively defends the thesis: "{st.session_state.thesis}".
     The player just said: "{player_argument}"
     Your goal is to reply with an argument that sounds arrogant, dismissive, and confidently incorrect. 
     You MUST deliberately inject the following logical fallacy into your response: **{chosen_fallacy}** ({FALLACIES[chosen_fallacy]}).
+    {difficulty_modifier}
     Keep your response to 2-4 sentences max. Do NOT mention the name of the fallacy in your response. Just execute it naturally but obviously.
     """
     try:
@@ -84,7 +103,6 @@ def generate_gaslight_response(player_argument):
         return f"Uh oh, my gaslight valves are jammed: {str(e)}"
 
 def generate_losing_line():
-    """Generates a dramatic, sore-loser final statement from the defeated AI."""
     prompt = f"""
     You are the 'Socratic Gaslighter'. You have completely lost the debate because the player successfully called out all your logical fallacies. Your credibility is at 0%.
     Write a single, incredibly salty, sore-loser dramatic exit sentence. You are coping hard, making excuses, or threatening that 'the truth will come out!' Max 2 sentences. Arrogant even in defeat.
@@ -95,26 +113,80 @@ def generate_losing_line():
     except:
         return "ERROR: Critical logic failure... You haven't seen the last of me, you conformist sheep!"
 
+def start_next_endless_opponent():
+    """Resets the Gaslighter for the next survival fight while preserving Player state."""
+    st.session_state.endless_streak += 1
+    # Heal the player a bit for surviving!
+    st.session_state.player_hp = min(100, st.session_state.player_hp + 30)
+    st.session_state.ai_hp = 100
+    st.session_state.thesis = random.choice(THESES)
+    
+    # Generate new boss intro
+    boss_intro_prompt = f"You are the 'Socratic Gaslighter'. You are a brand new, even more arrogant debater stepping into the ring. Drop a single, condescending, smug opening statement defending your new ridiculous thesis: '{st.session_state.thesis}'."
+    try:
+        opening_resp = client.models.generate_content(model='gemini-3.5-flash', contents=boss_intro_prompt).text.strip()
+    except:
+        opening_resp = f"A new challenger? Fine. Let's talk about why {st.session_state.thesis} is an absolute cosmic truth."
+        
+    st.session_state.chat_history = [{"role": "ai", "text": f"🔄 **OPPONENT DEFEATED!** A new challenger steps forward...\n\n {opening_resp}"}]
+    st.session_state.current_fallacy = random.choice(list(FALLACIES.keys()))
+
+def advance_championship_round():
+    """Moves to the next match of the tournament."""
+    st.session_state.championship_round += 1
+    st.session_state.player_hp = 100
+    st.session_state.ai_hp = 100
+    st.session_state.thesis = random.choice(THESES)
+    
+    round_intro_prompt = f"You are the 'Socratic Gaslighter'. This is Round {st.session_state.championship_round} of the tournament. Drop an opening statement defending: '{st.session_state.thesis}'. Make it sound even more intensely smug than the previous round."
+    try:
+        opening_resp = client.models.generate_content(model='gemini-3.5-flash', contents=round_intro_prompt).text.strip()
+    except:
+        opening_resp = f"Round {st.session_state.championship_round}. Prepare to be thoroughly dismantled."
+        
+    st.session_state.chat_history = [{"role": "ai", "text": f"🏆 **ROUND {st.session_state.championship_round} BEGINS!**\n\n {opening_resp}"}]
+    st.session_state.current_fallacy = random.choice(list(FALLACIES.keys()))
+
 def judge_objection(selected_fallacy):
     correct_fallacy = st.session_state.current_fallacy
     
     if selected_fallacy == correct_fallacy:
-        st.session_state.ai_hp -= 34
+        # Damage scaling based on Championship Rounds
+        damage = 34
+        if st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round == 3:
+            damage = 25  # Round 3 boss has more mental fortitude (takes 4 hits to defeat)
+
+        st.session_state.ai_hp -= damage
         if st.session_state.ai_hp <= 0:
             st.session_state.ai_hp = 0
-            st.session_state.game_over = True
-            st.session_state.game_result = "WIN"
-            st.session_state.chat_history.append({"role": "ai", "text": f"💥 [FATAL ERROR] {generate_losing_line()}"})
+            
+            # Handle progression instead of immediate win screen
+            if st.session_state.game_mode == "Endless Mode":
+                start_next_endless_opponent()
+                st.session_state.strike_alert = ("SUCCESS", f"💥 CRITICAL SUCCESS! You defeated the Gaslighter! Streak: {st.session_state.endless_streak}. Credibility partially restored (+30% HP)!")
+            elif st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round < 3:
+                advance_championship_round()
+                st.session_state.strike_alert = ("SUCCESS", f"💥 ROUND WON! You conquered Round {st.session_state.championship_round-1}. Prepare for the next opponent!")
+            else:
+                # Actual final win for Classic or completing Championship
+                st.session_state.game_over = True
+                st.session_state.game_result = "WIN"
+                st.session_state.chat_history.append({"role": "ai", "text": f"💥 [FATAL ERROR] {generate_losing_line()}"})
         else:
             st.session_state.strike_alert = ("SUCCESS", f"💥 STRIKE! You successfully spotted their **{correct_fallacy}**! The Gaslighter's credibility crumbles!")
         st.session_state.current_fallacy = "" 
     else:
-        st.session_state.player_hp -= 25
+        # Penalty scaling based on modes
+        penalty = 25
+        if st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round == 3:
+            penalty = 50  # Hardcore sudden-death vibe for final boss!
+            
+        st.session_state.player_hp -= penalty
         if st.session_state.player_hp <= 0:
             st.session_state.player_hp = 0
             st.session_state.game_over = True
             st.session_state.game_result = "LOSE"
-        st.session_state.strike_alert = ("FAIL", f"❌ FALSE ACCUSATION! The Gaslighter wraps your mind in knots. That wasn't a {selected_fallacy}. Your credibility drops!")
+        st.session_state.strike_alert = ("FAIL", f"❌ FALSE ACCUSATION! That wasn't a {selected_fallacy}. Your credibility drops by {penalty}%!")
 
 # -------------------------------------------------------------------
 # 3. CUSTOM STYLING & UI
@@ -124,32 +196,44 @@ st.markdown("""
     .debate-title { text-align: center; color: #FF4B4B; font-weight: 800; margin-bottom: 0px;}
     .user-bubble { background-color: #0E1117; border: 2px solid #00F0FF; padding: 15px; border-radius: 10px; margin-bottom: 10px; color: #E0E0E0; }
     .ai-bubble { background-color: #0E1117; border: 2px solid #FF007F; padding: 15px; border-radius: 10px; margin-bottom: 10px; color: #E0E0E0; }
+    .mode-badge { background-color: #1E1E2E; border: 1px solid #FFD700; padding: 5px 12px; border-radius: 15px; font-weight: bold; color: #FFD700; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
 
 st.write("<h1 class='debate-title'>🤥 The Socratic Gaslighter</h1>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# 4. HOME SCREEN (More descriptive, sets the vibe)
+# 4. HOME SCREEN & GAME MODE SELECTION
 # -------------------------------------------------------------------
 if not st.session_state.game_started:
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>Welcome to the High-Stakes Logical Fallacy Arena!</p>", unsafe_allow_html=True)
-    st.info("""
-    ### 🎮 The Premise
-    You are locked in a room with a smug, insufferable AI opponent who stubbornly defends an **objectively absurd thesis**. 
     
-    ### ⚔️ The Rules of Engagement
-    *   **You can't win with just facts.** The AI is programmed to dodge your logic using dirty rhetorical tricks (**logical fallacies**).
-    *   **Every turn**, the AI will hide a *specific* fallacy in its response. 
-    *   **To deal damage**, you must use the panel below the text box to **Object** and call out the exact fallacy they just used. A correct objection destroys **34%** of their credibility.
-    *   **Watch your HP:** If you argue normally without objecting, your credibility slowly bleeds out (-10% per turn). If you make a *false* objection, you lose **25%** credibility!
-    """)
+    # Game Mode Selection Panel
+    st.write("---")
+    st.subheader("🎯 Choose Your Game Mode")
     
+    mode_selection = st.radio(
+        "Select your preferred rhetorical gauntlet:",
+        ["Classic Duel", "Endless Mode (Survival)", "3-Round Championship"],
+        index=0,
+        horizontal=True
+    )
+    
+    # Dynamic description boxes based on mode selected
+    if mode_selection == "Classic Duel":
+        st.info("💡 **Classic Duel:** A pure head-to-head. Spot 3 logical fallacies before you run out of credibility to win.")
+    elif mode_selection == "Endless Mode (Survival)":
+        st.warning("💀 **Endless Mode:** Survival of the fittest. When you defeat an AI, they reset with a new thesis. Spotting fallacies restores some HP. How high of a streak can you survive?")
+    elif mode_selection == "3-Round Championship":
+        st.success("🏆 **3-Round Championship:** A scaling tournament. Round 1 has easy fallacies. Round 2 is tricky. Round 3 is an intense showdown where false accusations take double damage!")
+        
+    st.write("---")
     st.subheader("Select Your Battleground")
     selected_topic = st.selectbox("Pick an absurd thesis to dismantle:", THESES)
     custom_topic = st.text_input("...or type a custom absurd thesis of your own:")
     
     if st.button("🚨 Enter the Arena", use_container_width=True):
+        st.session_state.game_mode = mode_selection
         st.session_state.thesis = custom_topic if custom_topic.strip() else selected_topic
         st.session_state.game_started = True
         st.session_state.player_hp = 100
@@ -157,12 +241,14 @@ if not st.session_state.game_started:
         st.session_state.chat_history = []
         st.session_state.game_over = False
         st.session_state.strike_alert = None
+        st.session_state.endless_streak = 0
+        st.session_state.championship_round = 1
         
         opening_prompt = f"You are the 'Socratic Gaslighter'. Drop a single, incredibly smug, arrogant opening statement defending your thesis: '{st.session_state.thesis}'. Do not include fallacies yet, just set a challenging, condescending tone. 2 sentences max."
         try:
             opening_resp = client.models.generate_content(model='gemini-3.5-flash', contents=opening_prompt).text.strip()
         except:
-            opening_resp = "Oh, look. An 'intellectual' has arrived to challenge me. Prepare to be utterly outclassed."
+            opening_resp = "Oh, look. An 'intellectual' has arrived to challenge my superior logic. Prepare to be utterly outclassed."
             
         st.session_state.chat_history.append({"role": "ai", "text": opening_resp})
         st.session_state.current_fallacy = random.choice(list(FALLACIES.keys()))
@@ -172,6 +258,20 @@ if not st.session_state.game_started:
 # -------------------------------------------------------------------
 # 5. THE BATTLE ARENA (GAMEPLAY ACTIVE)
 # -------------------------------------------------------------------
+col_header_1, col_header_2 = st.columns([3, 1])
+with col_header_1:
+    st.markdown(f"### 📍 Target Thesis: *\"{st.session_state.thesis}\"*")
+with col_header_2:
+    # Display the current active game mode badge
+    if st.session_state.game_mode == "Classic Duel":
+        st.markdown("<div class='mode-badge'>🤺 Classic Duel</div>", unsafe_allow_html=True)
+    elif st.session_state.game_mode == "Endless Mode":
+        st.markdown(f"<div class='mode-badge'>💀 Survival (Streak: {st.session_state.endless_streak})</div>", unsafe_allow_html=True)
+    elif st.session_state.game_mode == "3-Round Championship":
+        st.markdown(f"<div class='mode-badge'>🏆 Tournament (Round: {st.session_state.championship_round}/3)</div>", unsafe_allow_html=True)
+
+st.write("---")
+
 col1, col2 = st.columns(2)
 with col1:
     st.markdown(f"**Your Credibility:** {st.session_state.player_hp}%")
@@ -180,7 +280,6 @@ with col2:
     st.markdown(f"**Gaslighter's Credibility:** {st.session_state.ai_hp}%")
     st.progress(st.session_state.ai_hp / 100)
 
-st.markdown(f"### 📍 Target Thesis: *\"{st.session_state.thesis}\"*")
 st.write("---")
 
 # Handle End-Game States
@@ -193,11 +292,17 @@ if st.session_state.game_over:
             st.markdown(f"<div class='ai-bubble'><b>🤥 Gaslighter:</b><br>{msg['text']}</div>", unsafe_allow_html=True)
             
     if st.session_state.game_result == "WIN":
-        st.success("🎉 TOTAL SYSTEM DEMOLITION! The Gaslighter's system has completely destabilized. Arrogance cannot withstand objective analysis!")
+        if st.session_state.game_mode == "3-Round Championship":
+            st.success("🏆 CHAMPIONSHIP CLEARED! You outmaneuvered the ultimate gaslighting grandmaster and claimed the trophy of logical supremacy!")
+        else:
+            st.success("🎉 TOTAL SYSTEM DEMOLITION! The Gaslighter's system has completely destabilized. Arrogance cannot withstand objective analysis!")
     else:
-        st.error("💀 DEFEAT... You got completely gaslit. Your credibility hit 0%.")
+        if st.session_state.game_mode == "Endless Mode":
+            st.error(f"💀 DEFEAT... Your credibility collapsed. You finished with a grand Survival Streak of **{st.session_state.endless_streak}**!")
+        else:
+            st.error("💀 DEFEAT... You got completely gaslit. Your credibility hit 0%.")
         
-    if st.button("Play Again", use_container_width=True):
+    if st.button("Play Again / Back to Menu", use_container_width=True):
         st.session_state.game_started = False
         st.rerun()
     st.stop()
@@ -223,7 +328,7 @@ for msg in st.session_state.chat_history:
 st.write("---")
 st.markdown("### 🕹️ Your Turn: Make Your Move")
 
-# Form elements automatically disable when st.session_state.processing_turn is True
+# Form elements automatically disable when processing_turn is True
 with st.form(key="battle_action_form", clear_on_submit=True):
     user_argument = st.text_area(
         "Type your counter-argument here:", 
@@ -248,16 +353,14 @@ with st.form(key="battle_action_form", clear_on_submit=True):
             disabled=st.session_state.processing_turn
         )
 
-# Process Turn Execution with loading spinners
+# Process Turn Execution
 if submit_action:
     if not user_argument.strip():
         st.warning("You can't just stare at them silently! Type a response.")
     else:
-        # Instant UI Lockout
         st.session_state.processing_turn = True
         st.rerun()
 
-# This block executes after the rerun above to ensure the lockout state is active and visible
 if st.session_state.processing_turn:
     with st.spinner("🧠 Evaluating your strategic framework... Checking targets..."):
         if selected_objection == "-- Don't Object, Just Argue Normal --":
