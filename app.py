@@ -278,17 +278,17 @@ if st.session_state.show_intro:
     st.markdown("<p style='text-align: center; color: #aaa; font-size: 18px;'>The Ultimate Logical Fallacy Battleground</p>", unsafe_allow_html=True)
     st.write("---")
     
-    st.markdown("""
+st.markdown("""
     ### 📖 Welcome to the Arena
     You are stepping into a high-stakes rhetorical arena facing **The Socratic Gaslighter**—an insufferably confident, aggressively smug debater who relies entirely on invalid logic, psychological projection, and corrupted debate practices to win arguments about entirely ridiculous facts.
     
     #### 🕹️ How It Works:
     1. **The Core Loop**: The Gaslighter will state an absurd thesis statement (e.g., *"Birds are government surveillance drones"*).
     2. **Spot the Flaw**: In every single response, the Gaslighter will intentionally deploy a major **logical fallacy** (such as *Ad Hominem*, *Strawman*, or *Circular Reasoning*).
-    3. **Call Them Out**: Your job is to draft a counter-argument and **accurately choose the fallacy** they committed from your toolkit.
+    3. **Call Them Out**: Your job is to select the exact fallacy they committed from your toolkit and execute your counter-argument.
     
     #### ⚡ The Stakes:
-    * **Spotting a Fallacy Right**: Damages the Gaslighter's credibility score. Bring it to 0% to collapse their logical system entirely!
+    * **Spotting a Fallacy Right**: The arena Referee will roast the Gaslighter, damaging their credibility score. Bring it to 0% to collapse their logical system entirely!
     * **Blindly Arguing / Accusing Wrong**: Drains your own credibility health bar. If you crash to 0%, you lose the argument and get completely gaslit!
     """)
     
