@@ -14,12 +14,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Initialize the Gemini Client
-# It automatically picks up GEMINI_API_KEY from the environment
+# Initialize the Gemini Client using Streamlit Secrets
 try:
-    client = genai.Client()
+    # This automatically pulls the key from your secrets.toml file
+    api_key = st.secrets["GEMINI_API_KEY"]
+    client = genai.Client(api_key=api_key)
 except Exception as e:
-    st.error("API Initialization Error: Make sure GEMINI_API_KEY is set in your environment.")
+    st.error("API Initialization Error: Make sure GEMINI_API_KEY is defined in your Streamlit secrets.")
     st.stop()
 
 # Pre-defined absurd theses
