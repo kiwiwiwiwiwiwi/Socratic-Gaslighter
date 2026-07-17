@@ -430,10 +430,9 @@ with st.form(key="battle_action_form", clear_on_submit=True):
     
     col_btn1, col_btn2 = st.columns([3, 1])
     with col_btn1:
-        selected_objection = st.selectbox(
+       selected_objection = st.selectbox(
             "Want to object? Select a logical fallacy from your cheat sheet:",
             ["-- Don't Object, Just Argue Normal --"] + list(FALLACIES.keys()),
-            help=help_tooltip_text,
             disabled=st.session_state.processing_turn
         )
     with col_btn2:
