@@ -97,7 +97,8 @@ def generate_gaslight_response(player_argument):
     Keep your response to 2-4 sentences max. Do NOT mention the name of the fallacy in your response. Just execute it naturally but obviously.
     """
     try:
-        response = client.models.generate_content(model='gemini-3.5-flash', contents=prompt)
+        # Using gemini-2.0-flash for a substantially higher API request quota limit
+        response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
         return response.text.strip()
     except Exception as e:
         return f"Uh oh, my gaslight valves are jammed: {str(e)}"
@@ -108,7 +109,7 @@ def generate_losing_line():
     Write a single, incredibly salty, sore-loser dramatic exit sentence. You are coping hard, making excuses, or threatening that 'the truth will come out!' Max 2 sentences. Arrogant even in defeat.
     """
     try:
-        response = client.models.generate_content(model='gemini-3.5-flash', contents=prompt)
+        response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
         return response.text.strip()
     except:
         return "ERROR: Critical logic failure... You haven't seen the last of me, you conformist sheep!"
@@ -124,7 +125,7 @@ def start_next_endless_opponent():
     # Generate new boss intro
     boss_intro_prompt = f"You are the 'Socratic Gaslighter'. You are a brand new, even more arrogant debater stepping into the ring. Drop a single, condescending, smug opening statement defending your new ridiculous thesis: '{st.session_state.thesis}'."
     try:
-        opening_resp = client.models.generate_content(model='gemini-3.5-flash', contents=boss_intro_prompt).text.strip()
+        opening_resp = client.models.generate_content(model='gemini-2.0-flash', contents=boss_intro_prompt).text.strip()
     except:
         opening_resp = f"A new challenger? Fine. Let's talk about why {st.session_state.thesis} is an absolute cosmic truth."
         
@@ -140,7 +141,7 @@ def advance_championship_round():
     
     round_intro_prompt = f"You are the 'Socratic Gaslighter'. This is Round {st.session_state.championship_round} of the tournament. Drop an opening statement defending: '{st.session_state.thesis}'. Make it sound even more intensely smug than the previous round."
     try:
-        opening_resp = client.models.generate_content(model='gemini-3.5-flash', contents=round_intro_prompt).text.strip()
+        opening_resp = client.models.generate_content(model='gemini-2.0-flash', contents=round_intro_prompt).text.strip()
     except:
         opening_resp = f"Round {st.session_state.championship_round}. Prepare to be thoroughly dismantled."
         
@@ -161,7 +162,7 @@ def judge_objection(selected_fallacy):
             st.session_state.ai_hp = 0
             
             # Handle progression instead of immediate win screen
-            if st.session_state.game_mode == "Endless Mode":
+            if st.session_state.game_mode == "Endless Mode (Survival)":
                 start_next_endless_opponent()
                 st.session_state.strike_alert = ("SUCCESS", f"💥 CRITICAL SUCCESS! You defeated the Gaslighter! Streak: {st.session_state.endless_streak}. Credibility partially restored (+30% HP)!")
             elif st.session_state.game_mode == "3-Round Championship" and st.session_state.championship_round < 3:
@@ -246,7 +247,7 @@ if not st.session_state.game_started:
         
         opening_prompt = f"You are the 'Socratic Gaslighter'. Drop a single, incredibly smug, arrogant opening statement defending your thesis: '{st.session_state.thesis}'. Do not include fallacies yet, just set a challenging, condescending tone. 2 sentences max."
         try:
-            opening_resp = client.models.generate_content(model='gemini-3.5-flash', contents=opening_prompt).text.strip()
+            opening_resp = client.models.generate_content(model='gemini-2.0-flash', contents=opening_prompt).text.strip()
         except:
             opening_resp = "Oh, look. An 'intellectual' has arrived to challenge my superior logic. Prepare to be utterly outclassed."
             
@@ -265,7 +266,7 @@ with col_header_2:
     # Display the current active game mode badge
     if st.session_state.game_mode == "Classic Duel":
         st.markdown("<div class='mode-badge'>🤺 Classic Duel</div>", unsafe_allow_html=True)
-    elif st.session_state.game_mode == "Endless Mode":
+    elif st.session_state.game_mode == "Endless Mode (Survival)":
         st.markdown(f"<div class='mode-badge'>💀 Survival (Streak: {st.session_state.endless_streak})</div>", unsafe_allow_html=True)
     elif st.session_state.game_mode == "3-Round Championship":
         st.markdown(f"<div class='mode-badge'>🏆 Tournament (Round: {st.session_state.championship_round}/3)</div>", unsafe_allow_html=True)
@@ -297,7 +298,7 @@ if st.session_state.game_over:
         else:
             st.success("🎉 TOTAL SYSTEM DEMOLITION! The Gaslighter's system has completely destabilized. Arrogance cannot withstand objective analysis!")
     else:
-        if st.session_state.game_mode == "Endless Mode":
+        if st.session_state.game_mode == "Endless Mode (Survival)":
             st.error(f"💀 DEFEAT... Your credibility collapsed. You finished with a grand Survival Streak of **{st.session_state.endless_streak}**!")
         else:
             st.error("💀 DEFEAT... You got completely gaslit. Your credibility hit 0%.")
