@@ -82,8 +82,9 @@ def generate_gaslight_response(player_argument):
     """
     
     try:
+        # CHANGED: Updated from 'gemini-2.5-flash' to 'gemini-3.5-flash'
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents=prompt,
         )
         return response.text.strip()
