@@ -282,3 +282,25 @@ if submit_action:
         # Reset submission flags and refresh view
         st.session_state.processing_turn = False
         st.rerun()
+
+# --- SIDEBAR CHEAT SHEET & MUSIC PLAYER ---
+with st.sidebar:
+    st.markdown("### 🎵 Arena Soundtrack")
+    st.write("Turn on your custom Suno theme music to set the mood:")
+    
+    # This renders a clean audio player in the sidebar
+    try:
+        st.audio(
+            "background_music.mp3", 
+            format="audio/mp3", 
+            loop=True, 
+            autoplay=False
+        )
+    except Exception as e:
+        st.info("💡 To play music, drop your Suno MP3 named 'background_music.mp3' into the project folder!")
+
+    st.write("---")
+    st.markdown("### 📖 Fallacy Cheat Sheet")
+    st.write("Use these descriptions to catch the Gaslighter cheating:")
+    for key, val in FALLACIES.items():
+        st.markdown(f"**• {key}**:\n*{val}*")
