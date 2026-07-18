@@ -378,18 +378,15 @@ with col_matrix:
 # Handle Unified Submission
 if submit_turn:
     if not user_argument.strip():
-        st.warning("Provide a written argument to submit your stance!")
+        st.sidebar.warning("Provide a written argument to submit your stance!")
     else:
         active_selections = [k for k, v in choices_status.items() if v]
         if active_selections:
-            # Checkbox selected -> Accuse mode
             st.session_state.action_type = ("ACCUSE", active_selections, user_argument)
         else:
-            # Checkbox blank -> Conversation mode
             st.session_state.action_type = ("TALK", [], user_argument)
-        st.rerun()
 
-# Run Backend Turns
+# Run Backend Turns (Processed cleanly in sequence)
 if st.session_state.action_type:
     act_mode, selections, txt = st.session_state.action_type
     
